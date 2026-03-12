@@ -1,22 +1,20 @@
-name: Check Web Performance Weekly
+name: PageSpeed Insights Audit Weekly
 on:
   schedule:
     - cron: "0 0 * * 1" # 매주 월요일 00:00에 실행
   workflow_dispatch: # 수동 실행 버튼 활성화
 
 jobs:
-  lighthouse-audit:
+  performance-audit:
+    name: PSI Audit
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        url_path: ["", "39", "38"]
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Audit URLs using Lighthouse
-        uses: treosh/lighthouse-config-action@v11
+      - name: PageSpeed Insights
+        uses: jakepartusch/psi-action@v1.3
         with:
-          urls: |
-            https://${{ vars.BLOG_DOMAIN }}/
-            https://${{ vars.BLOG_DOMAIN }}/39
-            https://${{ vars.BLOG_DOMAIN }}/38
-          uploadArtifacts: true
-          temporaryPublicStorage: true
+          url: https://${{ vars.BLOG_DOMAIN }}/${{ matrix.url_path }}
+          key: ${{ secrets.PSI_API_KEY }}
+          # threshold: 90 # 원하는 경우 최소 점수 기준 설정 가능
