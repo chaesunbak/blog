@@ -21,18 +21,3 @@ jobs:
           key: ${{ secrets.PSI_API_KEY }}
           strategy: ${{ matrix.strategy }}
           threshold: 1
-
-      - name: Create Summary
-        if: always()
-        run: |
-          echo "## ⚡ PageSpeed Insights Result: ${{ matrix.strategy }}" >> $GITHUB_STEP_SUMMARY
-          echo "URL: https://${{ vars.BLOG_DOMAIN }}/${{ matrix.url_path }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🚀 **Performance Score** | **${{ steps.psi.outputs.score }}** |" >> $GITHUB_STEP_SUMMARY
-          echo "| ⏱️ Largest Contentful Paint | ${{ steps.psi.outputs.largest-contentful-paint }} ms |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🧱 Cumulative Layout Shift | ${{ steps.psi.outputs.cumulative-layout-shift }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ⌛ Total Blocking Time | ${{ steps.psi.outputs.total-blocking-time }} ms |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📏 First Contentful Paint | ${{ steps.psi.outputs.first-contentful-paint }} ms |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
