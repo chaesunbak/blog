@@ -14,9 +14,24 @@ jobs:
         strategy: ["mobile", "desktop"]
     steps:
       - name: PageSpeed Insights
+        id: psi
         uses: jakepartusch/psi-action@v1.3
         with:
           url: https://${{ vars.BLOG_DOMAIN }}/${{ matrix.url_path }}
           key: ${{ secrets.PSI_API_KEY }}
           strategy: ${{ matrix.strategy }}
           threshold: 1
+
+      - name: Create Summary
+        if: always()
+        run: |
+          echo "## ⚡ PageSpeed Insights Results (${{ matrix.strategy }})" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Score |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🚀 Performance | ${{ steps.psi.outputs.performance }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ♿ Accessibility | ${{ steps.psi.outputs.accessibility }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🛠️ Best Practices | ${{ steps.psi.outputs.best-practices }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 SEO | ${{ steps.psi.outputs.seo }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📱 PWA | ${{ steps.psi.outputs.pwa }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "URL: https://${{ vars.BLOG_DOMAIN }}/${{ matrix.url_path }}" >> $GITHUB_STEP_SUMMARY
