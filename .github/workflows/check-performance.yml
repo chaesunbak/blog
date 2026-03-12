@@ -11,10 +11,12 @@ jobs:
     strategy:
       matrix:
         url_path: ["", "39", "38"]
+        strategy: ["mobile", "desktop"]
     steps:
       - name: PageSpeed Insights
         uses: jakepartusch/psi-action@v1.3
         with:
           url: https://${{ vars.BLOG_DOMAIN }}/${{ matrix.url_path }}
           key: ${{ secrets.PSI_API_KEY }}
+          strategy: ${{ matrix.strategy }}
           threshold: 1
