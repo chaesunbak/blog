@@ -17,4 +17,4 @@ jobs:
         with:
           url: https://${{ vars.BLOG_DOMAIN }}/${{ matrix.url_path }}
           key: ${{ secrets.PSI_API_KEY }}
-          threshold: 0
+          threshold: 1
