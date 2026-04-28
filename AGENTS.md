@@ -1,8 +1,12 @@
 ## Styling
 
-## Never use SHADOW
+### Never use SHADOW
 
 ## Component Style
+
+### No render helper function
+
+Do not create render helper functions. Prefer declaring small components instead.
 
 ### Props
 
