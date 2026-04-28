@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
-import { PostList } from "@/components/posts/post-list";
-import { BreadcrumbJsonLd } from "@/components/seo/breadcrumb-json-ld";
-import { buildMetadata, createPaginatedPath } from "@/lib/metadata";
+import type { Metadata } from 'next';
+import { PostList } from '@/components/posts/post-list';
+import { BreadcrumbJsonLd } from '@/components/seo/breadcrumb-json-ld';
+import { buildMetadata, createPaginatedPath } from '@/lib/metadata';
 import {
   decodeSegment,
   encodeSegment,
   getPageFromSearchParam,
   paginateItems,
   searchPosts,
-} from "@/lib/posts";
+} from '@/lib/posts';
 
 export async function generateMetadata({
   params,
@@ -25,7 +25,7 @@ export async function generateMetadata({
   const currentPage = getPageFromSearchParam(resolvedSearchParams.page);
 
   return buildMetadata({
-    title: `"${query}" 검색 결과`,
+    title: `'${query}'의 검색결과`,
     description: `"${query}" 검색 결과 페이지입니다.`,
     path: createPaginatedPath(`/search/${encodeSegment(query)}`, currentPage),
     keywords: [query],
@@ -52,11 +52,11 @@ export default async function SearchPage({
   );
 
   return (
-    <main className="site-frame flex w-full flex-col gap-10 py-10 sm:py-12 lg:py-14">
+    <main className="mx-auto flex w-full max-w-5xl flex-col py-10 sm:py-12 lg:py-14">
       <BreadcrumbJsonLd
         items={[
-          { name: "홈", path: "/" },
-          { name: "검색", path: `/search/${encodeSegment(query)}` },
+          { name: '홈', path: '/' },
+          { name: '검색', path: `/search/${encodeSegment(query)}` },
         ]}
       />
       <PostList

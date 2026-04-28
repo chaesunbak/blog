@@ -88,7 +88,7 @@ input[type='search']::-webkit-search-results-decoration {
 
 .prose {
   --tw-prose-body: #334155;
-  --tw-prose-headings: #0f172a;
+  --tw-prose-headings: #273449;
   --tw-prose-links: #2563eb;
   --tw-prose-bold: #0f172a;
   --tw-prose-bullets: #94a3b8;
@@ -243,6 +243,35 @@ pre {
 .prose pre > code::before,
 .prose pre > code::after {
   content: none;
+}
+
+.prose details {
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 1rem;
+  background: rgba(248, 250, 252, 0.78);
+}
+
+.prose summary {
+  cursor: pointer;
+  padding: 0.95rem 1.1rem;
+  font-weight: 600;
+  color: #273449;
+}
+
+.prose details[open] > summary {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+.prose details > :not(summary) {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.prose details pre {
+  margin: 0;
+  border-radius: 0;
 }
 
 /* Line numbering */

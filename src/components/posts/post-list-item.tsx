@@ -9,21 +9,32 @@ export function PostListItem({ post }: { post: Post; showDivider?: boolean }) {
   const displayDate = formatDisplayDate(post.date);
 
   return (
-    <article className="group py-2">
+    <article
+      className={cn(
+        'group py-2',
+        !hasThumbnail && 'min-h-[clamp(12rem,24vw,15rem)]',
+      )}
+    >
       <div
         className={cn(
-          'grid gap-8',
-          hasThumbnail && 'grid-cols-3 lg:items-start',
+          'grid gap-5 sm:gap-6',
+          hasThumbnail &&
+            'md:grid-cols-[minmax(0,1.75fr)_minmax(14rem,1fr)] md:items-start md:gap-8',
         )}
       >
-        <div className="col-span-2 flex flex-col gap-4">
+        <div
+          className={cn(
+            'flex flex-col gap-4',
+            hasThumbnail && 'order-2 md:order-1 md:min-w-0',
+          )}
+        >
           <div className="flex flex-wrap items-center gap-4">
             <Badge variant="default">{post.category}</Badge>
             <Badge variant="secondary">{displayDate ?? '작성일 미정'}</Badge>
           </div>
 
           <div className="space-y-4">
-            <h2 className="max-w-4xl text-2xl font-bold text-slate-800 transition-colors hover:text-blue-500">
+            <h2 className="max-w-4xl text-2xl font-bold text-gray-700 transition-colors hover:text-blue-500">
               <Link href={`/${post.slug}`}>{post.title}</Link>
             </h2>
             <p className="max-w-4xl text-slate-600">{post.description}</p>
@@ -33,9 +44,9 @@ export function PostListItem({ post }: { post: Post; showDivider?: boolean }) {
         {hasThumbnail ? (
           <Link
             href={`/${post.slug}`}
-            className="block overflow-hidden rounded-lg p-4"
+            className="order-1 block w-full overflow-hidden rounded-xl p-4 md:order-2"
           >
-            <div className="relative aspect-[4/3] overflow-hidden rounded-lg">
+            <div className="relative aspect-4/3 overflow-hidden rounded-xl">
               <Image
                 src={post.thumbnail!}
                 alt={post.title}

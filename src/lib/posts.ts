@@ -122,12 +122,41 @@ function normalizeSearchTarget(value: string) {
   return value.toLocaleLowerCase("ko-KR");
 }
 
-function parsePostSource(source: string) {
-  const { content, data } = matter(source);
+function formatZodIssue(issue: z.core.$ZodIssue) {
+  const fieldPath = issue.path.length > 0 ? issue.path.join(".") : "frontmatter";
+
+  return `${fieldPath}: ${issue.message}`;
+}
+
+function parsePostSource(source: string, sourcePath: string) {
+  let parsed: { content: string; data: unknown };
+
+  try {
+    parsed = matter(source);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Unknown error";
+
+    throw new Error(`Failed to parse frontmatter in ${sourcePath}: ${reason}`);
+  }
+
+  const metadataResult = postFrontmatterSchema.safeParse(parsed.data);
+
+  if (!metadataResult.success) {
+    const issues = metadataResult.error.issues.map(formatZodIssue).join("; ");
+
+    throw new Error(
+      `Invalid frontmatter in ${sourcePath}: ${issues}. Received: ${JSON.stringify(parsed.data)}`,
+    );
+  }
+
+  const sanitizedContent = parsed.content.replace(
+    /^\[##_Image\|.*?_##\]\s*$/gm,
+    "",
+  );
 
   return {
-    body: content,
-    metadata: postFrontmatterSchema.parse(data),
+    body: sanitizedContent,
+    metadata: metadataResult.data,
   };
 }
 
@@ -189,7 +218,7 @@ export const getAllPosts = cache(async (): Promise<Post[]> => {
     slugs.map(async (slug) => {
       const sourcePath = getPostSourcePath(slug);
       const source = await fs.readFile(sourcePath, "utf8");
-      const { body, metadata } = parsePostSource(source);
+      const { body, metadata } = parsePostSource(source, sourcePath);
 
       return {
         slug,
@@ -212,7 +241,7 @@ export const getPostBySlug = cache(
 
     const sourcePath = getPostSourcePath(slug);
     const source = await fs.readFile(sourcePath, "utf8");
-    const { body, metadata } = parsePostSource(source);
+    const { body, metadata } = parsePostSource(source, sourcePath);
     const { content } = await compileMDX({
       source: body,
       components: getMDXComponents(slug),

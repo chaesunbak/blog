@@ -1,11 +1,13 @@
 ---
-title: "DB에서 랜덤한 요소 불러오기"
-category: "회고"
+title: 'DB에서 랜덤한 요소 불러오기'
+description: '근데 이거 진짜 랜덤한거 맞아요?'
+category: '회고'
 tags:
-  - "DB"
-  - "Firestore"
-  - "Firebase"
-thumbnail: "./card-example.png"
+  - 'DB'
+  - 'Firestore'
+  - 'Firebase'
+thumbnail: './card-example.png'
+date: '2025-02-27'
 ---
 
 음악 인기도 맞추기 게임 [스포티게서](https://spoti-guessr.chaesunbak.com/)를 개발하면서, DB에서 랜덤한 요소를 가져올 필요가 있었다. 두가지 랜덤한 요소 중 인기도가 높은 요소를 맞추는 게임이었기 때문이다. 단순해 보이는 "랜덤"이라는 개념 뒤에 숨겨진 기술적 고민과 해결 과정을 공유하고자 한다. 스포티게서는 NoSQL DB인 파이어베이스의 파이어스토어를 사용했기에 컬렉션과 문서라는 용어를 사용하지만, 관계형 DB의 테이블과 행으로 대체하여 이해해도 무방하다.

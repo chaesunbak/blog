@@ -12,7 +12,7 @@ thumbnail: './thumbnail.png'
 
 Tailwind CSS 패키지와 Vite 플러그인 패키지를 설치한다.
 
-```
+```bash
 npm install tailwindcss @tailwindcss/vite
 ```
 
@@ -31,7 +31,7 @@ export default defineConfig({
 
 전역 스타일 시트에 테일윈드 스타일 스타일을 불러오고, 이를 애플리케이션에 적용한다. 스타일시트의 파일명은 달라도 상관없다. (global.css 등)
 
-```
+```css
 //index.css
 
 @import "tailwindcss";
@@ -39,7 +39,7 @@ export default defineConfig({
 ..나머지 CSS
 ```
 
-```
+```tsx
 
 //main.tsx
 import { StrictMode } from "react";
@@ -59,11 +59,11 @@ createRoot(document.getElementById("root")!).render(
 
 [프리티어 테일윈드 플러그인](https://github.com/tailwindlabs/prettier-plugin-tailwindcss)을 설정하면 클래스명이 자동으로 정렬되어, 코드 가독성이 좋아진다.
 
-```
+```bash
 npm install -D prettier prettier-plugin-tailwindcss
 ```
 
-```
+```json
 // .prettierrc
 {
   "plugins": ["prettier-plugin-tailwindcss"]

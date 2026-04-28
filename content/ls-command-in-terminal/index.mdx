@@ -1,0 +1,226 @@
+---
+title: '터미널에서 ls 명령어를 치면 무슨 일이 일어날까?'
+category: '분석'
+date: '2026-01-04'
+tags:
+  - 'Linux'
+  - 'OS'
+thumbnail: './thumbnail.png'
+---
+
+`ls` 명령어는 파일 및 디렉터리 목록을 보여주는(list) 기본 리눅스 명령어다.
+
+_입력_
+
+```plaintext
+ls
+```
+
+_출력_
+
+```plaintext
+/home/ /root
+```
+
+그렇다면, 터미널에 `ls` 명령어를 칠 때 내부적으로는 무슨 일어날까? 이번에는 운영체제(OS)의 관점에서 그 여정을 따라가 보며 OS의 핵심 원리들을 정리해보고자 한다.
+
+## 프로그램과 프로세스
+
+우리가 터미널에 `ls`를 입력하기 전, `ls`는 디스크의 특정 위치(`/usr/bin/ls`)에 저장되어 있는 **프로그램**(Program)으로 존재한다. 정확히는 C 언어로 작성되어 컴파일된 바이너리 형식의 파일이다. 프로그램이란 어떤 작업을 위해 실행될 수 있는 파일을 말한다.
+
+엔터키를 입력하는 순간, 이 정적인 파일은 메모리에 올라가 실행 엔진이 돌아가는 **프로세스**(Process)로 변신한다. 프로세스란 실행 중인 프로그램을 의미하며, CPU에 의해 실행되는 동적인 상태의 작업 단위이다.
+
+운영체제는 프로세스를 트리 구조의 계층구조로 관리한다. 한 프로세스가 다른 프로세스를 생성하면, 두 프로세스는 부모-자식 관계를 맺는다. 따라서 `ls` 명령어를 입력하면, 쉘은 부모 프로세스, `ls`는 자식 프로세스가 된다.
+
+또한, 프로세스는 생애주기에 따라 생성, 준비, 실행, 대기, 종료라는 상태를 갖는다. `ls`는 실행되어 결과를 출력하고 나면 즉시 종료 상태로 전이되며 OS에 의해 자원이 회수된다. 이러한 상태 전이를 프로세스 상태 전이라고 한다.
+
+운영체제는 프로세스 스케쥴링을 통해 여러 프로세스를 번갈아 실행하면서, CPU의 코어 갯수보다 많은 프로세스가 마치 동시에 동작하는 것처럼 동시성을 구현할 수도 있다.
+
+## 사용자 공간
+
+`ls`는 주어진 경로의 파일 및 디렉터리 목록를 출력하기 위해, 파일 등의 자원에 접근할 필요가 있다. 하지만, 운영체제는 안정성, 보안, 효율성을 위해 프로세스가 하드웨어나 민감한 시스템 자원에 직접 접근하는 것을 막는다. 이러한 목적으로, 운영체제는 `ls`와 같은사용자 프로그램과 운영체제의 핵심인 커널을 각각 사용자 공간과 커널 공간으로 격리하여 실행한다. 오직 커널만이 CPU, 메모리, 디스크 등 모든 하드웨어 자원을 제어할 수 있는 권한을 가지므로, `ls` 프로세스는 직접 시스템 자원에 접근하는 대신 커널에게 요청해야 한다.
+
+## 커널과 시스템 콜
+
+커널은 운영체제의 심장부로, 응용 프로그램들이 자원을 안전하게 사용할 수 있게 지휘한다. 이때 응용 프로그램이 커널에게 서비스를 요청하는 유일한 통로가 바로 시스템 콜(System Call)이다. 쉽게말해, 시스템 콜은 사용자 공간의 프로세스가 커널의 기능을 사용하기 위해 호출하는 인터페이스다. 리눅스의 시스템 콜 목록은 [여기](https://thevivekpandey.github.io/posts/2017-09-25-linux-system-calls.html)서 확인해볼 수 있다.
+
+`ls` 프로세스는 크게 다음과 같은 시스템 콜을 호출하여 작업을 수행한다.
+
+1.  `execve()`: 쉘(bash, zsh 등)이 `ls`라는 실행 파일을 메모리에 올리고 실행.
+2.  `openat()`: 현재 디렉토리(`.`) 열기. (리눅스에서는 디렉토리도 하나의 '파일'로 취급된다.)
+3.  `getdents64()` : 디렉터리 엔트리(Directory Entries)를 가져오기. 디렉터리 내부의 파일 이름, inode 번호 등을 커널로부터 받아오는 가장 핵심적인 단계.
+4.  `write()`: 커널이 가져다준 데이터를 가공하여 터미널(표준 출력)에 화면을 그림.
+
+## VFS (Virtual File System)
+
+리눅스는 여러 종류의 파일 시스템을 사용한다. 내장 하드에서는 `ext4`, USB에서는 `FAT32`, 네트워크에서는 `NFS`를 사용한다. 각 파일 시스템은 데이터를 저장하고 관리하는 방식(레이아웃)이 모두 다르다. 하지만, 가상 파일 시스템(VFS)은 프로세스가 동일한 인터페이스로(`getdents64`) 여러 파일 시스템을 사용할 수 있게 해준다.
+
+_외장 USB(FAT32)에서 `ls`를 치는 경우의 흐름:_
+
+1.  `ls`는 파일 시스템 종류와 상관없이 동일하게 `getdents64` 시스템 콜을 보낸다.
+2.  VFS는 해당 경로가 어느 파일 시스템에 마운트되어 있는지 확인한다.
+3.  VFS는 내부의 함수 포인터를 사용하여, 타겟이 내장 하드라면 `ext4_readdir`를, USB라면 `fat_readdir`를 매핑하여 호출한다.
+
+## strace
+
+`strace`는 프로세스가 실행되는 동안 호출하는 모든 시스템 콜을 추적(trace)하는 리눅스 명령어다.`strace ls`를 실행해 보면 `ls` 프로세스가 주어진 작업을 수행하는 흐름을 확인할 수 있다.
+
+_입력_
+
+```plaintext
+strace ls
+```
+
+_출력_
+
+<details>
+<summary>전체 `strace` 출력 보기</summary>
+
+```plaintext
+root@f2b0ddc7ca37:/# strace ls
+execve("/usr/bin/ls", ["ls"], 0xffffd5898c80 /* 8 vars */) = 0
+brk(NULL)                               = 0xaaab22737000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xffff8b1f5000
+faccessat(AT_FDCWD, "/etc/ld.so.preload", R_OK) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=5199, ...}) = 0
+mmap(NULL, 5199, PROT_READ, MAP_IVATE, 3, 0) = 0xffff8b1f3000
+close(3)                                = 0
+openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libselinux.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0644, st_size=198800, ...}) = 0
+mmap(NULL, 337472, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_DENYWRITE, -1, 0) = 0xffff8b169000
+mmap(0xffff8b170000, 271936, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0) = 0xffff8b170000
+munmap(0xffff8b169000, 28672)           = 0
+munmap(0xffff8b1b3000, 34368)           = 0
+mprotect(0xffff8b19c000, 77824, PROT_NONE) = 0
+mmap(0xffff8b1af000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2f000) = 0xffff8b1af000
+mmap(0xffff8b1b1000, 5696, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xffff8b1b1000
+close(3)                                = 0
+openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\360\206\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=1722920, ...}) = 0
+mmap(NULL, 1892240, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_DENYWRITE, -1, 0) = 0xffff8afa2000
+mmap(0xffff8afb0000, 1826704, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0) = 0xffff8afb0000
+munmap(0xffff8afa2000, 57344)           = 0
+munmap(0xffff8b16e000, 8080)            = 0
+mprotect(0xffff8b149000, 81920, PROT_NONE) = 0
+mmap(0xffff8b15d000, 20480, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x19d000) = 0xffff8b15d000
+mmap(0xffff8b162000, 49040, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xffff8b162000
+close(3)                                = 0
+openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libpcre2-8.so.0", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0644, st_size=592328, ...}) = 0
+mmap(NULL, 721536, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_DENYWRITE, -1, 0) = 0xffff8aeff000
+mmap(0xffff8af00000, 656000, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0) = 0xffff8af00000
+munmap(0xffff8aeff000, 4096)            = 0
+munmap(0xffff8afa1000, 57984)           = 0
+mprotect(0xffff8af88000, 94208, PROT_NONE) = 0
+mmap(0xffff8af9f000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x8f000) = 0xffff8af9f000
+close(3)                                = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xffff8b1f1000
+set_tid_address(0xffff8b1f10f0)         = 163
+set_robust_list(0xffff8b1f1100, 24)     = 0
+rseq(0xffff8b1f1740, 0x20, 0, 0xd428bc00) = 0
+mprotect(0xffff8b15d000, 12288, PROT_READ) = 0
+mprotect(0xffff8af9f000, 4096, PROT_READ) = 0
+mprotect(0xffff8b1af000, 4096, PROT_READ) = 0
+mprotect(0xaaaae4afe000, 8192, PROT_READ) = 0
+mprotect(0xffff8b1fa000, 8192, PROT_READ) = 0
+prlimit64(0, RLIMIT_STACK, NULL, {rlim_cur=8192*1024, rlim_max=RLIM64_INFINITY}) = 0
+munmap(0xffff8b1f3000, 5199)            = 0
+statfs("/sys/fs/selinux", 0xffffeb7a0260) = -1 ENOENT (No such file or directory)
+statfs("/selinux", 0xffffeb7a0260)      = -1 ENOENT (No such file or directory)
+getrandom("\x6f\x51\x87\x54\xb1\x2b\xb8\xfc", 8, GRND_NONBLOCK) = 8
+brk(NULL)                               = 0xaaab22737000
+brk(0xaaab22758000)                     = 0xaaab22758000
+openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+read(3, "nodev\tsysfs\nnodev\ttmpfs\nnodev\tbd"..., 1024) = 577
+read(3, "", 1024)                       = 0
+close(3)                                = 0
+faccessat(AT_FDCWD, "/etc/selinux/config", F_OK) = -1 ENOENT (No such file or directory)
+ioctl(1, TCGETS, {c_iflag=ICRNL|IXON, c_oflag=NL0|CR0|TAB0|BS0|VT0|FF0|OPOST|ONLCR, c_cflag=B38400|CS8|CREAD, c_lflag=ISIG|ICANON|ECHO|ECHOE|ECHOK|IEXTEN|ECHOCTL|ECHOKE, ...}) = 0
+ioctl(1, TIOCGWINSZ, {ws_row=24, ws_col=80, ws_xpixel=0, ws_ypixel=0}) = 0
+openat(AT_FDCWD, ".", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+getdents64(3, 0xaaab2273c600 /* 21 entries */, 32768) = 520
+getdents64(3, 0xaaab2273c600 /* 0 entries */, 32768) = 0
+close(3)                                = 0
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(0x88, 0), ...}) = 0
+write(1, "bin   dev  home  media\topt   roo"..., 50bin   dev  home  media    opt   root  sbin  sys  usr
+) = 50
+write(1, "boot  etc  lib\t mnt\tproc  run   "..., 47boot  etc  lib     mnt    proc  run   srv   tmp  var
+) = 47
+close(1)                                = 0
+close(2)                                = 0
+exit_group(0)                           = ?
++++ exited with 0 +++
+```
+
+</details>
+
+## 시스템 콜 딥다이브
+
+`ls` 프로세스가 호출한 전체 시스템콜 중 주요 시스템 콜들을 더 자세히 알아보자.
+
+1.  프로세스 실행
+
+```plaintext
+execve("/usr/bin/ls", ["ls"], 0xffffd5898c80) = 0
+```
+
+- `fork()`는 현재 실행 중인 쉘(Shell) 프로세스의 복사본을 만들어 자식 프로세스를 생성하는 시스템 콜이다. 생성된 자식 프로세스는 `execve()`를 호출하여 자신의 메모리 공간을 `ls` 프로그램의 바이너리로 완전히 교체한다. 쉘은 이 과정을 통해 명령어를 새로운 독립적인 작업 단위로 실행한다.
+
+2.  런타임 환경 준비
+
+```plaintext
+<openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libselinux.so.1", ...) = 3
+openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libc.so.6", ...) = 3
+...
+mmap(NULL, 337472, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_DENYWRITE, -1, 0) = 0xffff8b169000
+```
+
+- `openat()`을 사용하여 프로그램 실행에 필수적인 표준 라이브러리(`libc.so` 등) 파일을 찾아 연다. 그 후 `mmap()` 시스템 콜을 통해 해당 라이브러리 파일의 내용을 프로세스의 가상 메모리 주소 공간에 직접 매핑한다. 이 과정을 거쳐 `ls`는 별도의 복사 과정 없이 메모리상의 라이브러리 코드를 즉시 호출할 수 있다.
+
+3.  하드웨어 환경 파악
+
+```plaintext
+ioctl(1, TCGETS, ...) = 0
+ioctl(1, TIOCGWINSZ, {ws_row=24, ws_col=80, ...}) = 0
+```
+
+- `ioctl()` 시스템 콜을 사용하여 현재 출력이 나갈 터미널(TTY)의 상태를 확인한다. 특히 터미널의 가로 폭(Window Size) 정보를 가져와 파일 목록을 몇 개의 열로 배치할지 결정한다. 출력 대상이 터미널인지 파일인지에 따라 `ls`가 결과 포맷을 다르게 구성하는 기준이 된다.
+
+4.  목록 조회
+
+```plaintext
+openat(AT_FDCWD, ".", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 3
+getdents64(3, /* 21 entries */, 32768) = 520
+```
+
+- `openat()`으로 현재 디렉터리(`.`)를 열어 파일 디스크립터(번호표)를 획득한다. 핵심인 `getdents64()` 시스템 콜을 통해 커널로부터 디렉터리 내의 모든 파일 이름과 Inode 번호 묶음을 한꺼번에 받아온다. 이때 VFS는 실제 장치가 무엇인지 판단하여 하드웨어의 데이터를 읽어온다.
+
+5.  출력과 프로세스 종료
+
+```plaintext
+write(1, "bin   dev  home  media\topt   roo"..., 50) = 50
+write(1, "boot  etc  lib\t mnt\tproc  run   "..., 47) = 47
+exit_group(0)                           = ?
+```
+
+- `write()` 시스템 콜을 사용하여 가공된 텍스트 데이터를 1번 파일 디스크립터(표준 출력)로 보낸다. 터미널은 이 데이터를 받아 화면에 글자를 렌더링하여 사용자에게 보여준다. 모든 작업이 끝나면 `exit_group()`을 호출해 프로세스가 사용하던 메모리와 자원을 OS에 모두 반납하고 완전히 사라진다.
+
+## 여기서 다루지 않은 것
+
+프로세스와 시스템콜 개념에 집중하여 설명하다보니, 몇몇 개념은 언급만 하거나 자세히 다루지 못했다. 이후에 아래 개념들을 더 학습해보고 위 흐름과 연결지어보면 좋을 것 같다.
+
+- 리눅스의 구성 요소
+- 터미널(Terminal)과 쉘(Shell)
+- Inode
+- 정적 라이브러리와 동적 라이브러리
+- TTY
+- IPC와 파이프
+- 파일 디스크립터(File Descriptor)
+- 덴트리 캐시(Dentry Cache)

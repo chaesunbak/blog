@@ -1,6 +1,6 @@
 ---
 title: '클래스로 리액트 상태관리하기? (클래스 컴포넌트 아님)'
-description: '상태관리'
+description: '상태관리 3파전의 토론 구경하세요'
 date: '2025-08-14'
 tags:
   - 'React'
@@ -82,10 +82,7 @@ const addCertificateCredit = (name) => {
 function clonePlanner(planner) {
   if (!planner) return planner;
 
-  return Object.assign(
-    Object.create(Object.getPrototypeOf(planner)),
-    planner,
-  );
+  return Object.assign(Object.create(Object.getPrototypeOf(planner)), planner);
 }
 ```
 
@@ -191,14 +188,20 @@ export function validatePlanner(input) {
 ```tsx
 //src/components/App.tsx
 export function App() {
-  const [selectedProgram, setSelectedProgram] = useState<DegreeProgram | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<DegreeProgram | null>(
+    null,
+  );
   const [selectedMajor, setSelectedMajor] = useState<Major | null>(null);
   const [certCredits, setCertCredits] = useState<CertificateCredit[]>([]);
   const [selfCredits, setSelfCredits] = useState<SelfEducationCredit[]>([]);
 
   const totals = computeTotals(certCredits, selfCredits, lecCredits);
   const required = getRequiredCredits(selectedProgram);
-  const certErrors = validateCertificates(selectedProgram, selectedMajor, certCredits);
+  const certErrors = validateCertificates(
+    selectedProgram,
+    selectedMajor,
+    certCredits,
+  );
   const selfErrors = validateSelfEducation(selfCredits);
 
   // ...

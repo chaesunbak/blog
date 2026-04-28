@@ -14,12 +14,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from '@/components/ui/input-group';
-import { Kbd, KbdGroup } from '@/components/ui/kbd';
+  Kbd,
+  KbdGroup,
+} from '@/components/ui/kbd';
 import { cn } from '@/lib/utils';
 
 const SearchField = ({
@@ -35,35 +32,31 @@ const SearchField = ({
   onChange: (value: string) => void;
   onClear: () => void;
 }) => (
-  <InputGroup className="h-11 rounded-full border-slate-200 bg-white">
-    <InputGroupInput
+  <div className="relative">
+    <input
       id={inputId}
-      type="search"
+      type="text"
+      inputMode="search"
+      enterKeyHint="search"
       placeholder="검색"
       value={query}
       autoFocus={autoFocus}
       onChange={(event) => onChange(event.target.value)}
-      className="rounded-full"
+      className="h-11 w-full rounded-full border border-slate-200 bg-white pr-12 pl-11 text-sm text-slate-950 outline-none ring-offset-1 transition-all placeholder:text-muted-foreground focus-visible:ring-[2px] focus-visible:ring-ring"
       role="searchbox"
     />
-    <InputGroupAddon align="inline-start">
-      <Search className="h-4 w-4" />
-    </InputGroupAddon>
+    <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2" />
     {query ? (
-      <InputGroupAddon align="inline-end">
-        <InputGroupButton
-          type="button"
-          size="icon-sm"
-          variant="ghost"
-          onClick={onClear}
-          className="text-muted-foreground hover:text-foreground rounded-full"
-          aria-label="검색어 지우기"
-        >
-          <X className="h-4 w-4" />
-        </InputGroupButton>
-      </InputGroupAddon>
+      <button
+        type="button"
+        onClick={onClear}
+        className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full transition-colors"
+        aria-label="검색어 지우기"
+      >
+        <X className="h-4 w-4" />
+      </button>
     ) : null}
-  </InputGroup>
+  </div>
 );
 
 const DesktopSearch = ({
@@ -144,17 +137,6 @@ const SearchDialog = ({
           onClear={onClear}
         />
         <div className="flex items-center justify-end gap-2">
-          {query ? (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={onClear}
-              className="rounded-full px-4"
-            >
-              초기화
-            </Button>
-          ) : null}
-
           <Button type="submit" className="rounded-full px-4">
             검색
           </Button>

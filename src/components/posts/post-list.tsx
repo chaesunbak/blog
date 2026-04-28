@@ -1,14 +1,14 @@
-import { PostListItem } from "@/components/posts/post-list-item";
-import { PostPagination } from "@/components/posts/post-pagination";
-import { type Post } from "@/lib/posts";
+import { PostListItem } from '@/components/posts/post-list-item';
+import { PostPagination } from '@/components/posts/post-pagination';
+import { type Post } from '@/lib/posts';
 
 export function PostList({
   posts,
   currentPage,
   totalPages,
   basePath,
-  emptyTitle = "아직 등록된 포스트가 없습니다.",
-  emptyDescription = "새 글이 올라오면 이 자리에서 바로 볼 수 있어요.",
+  emptyTitle = '아직 등록된 포스트가 없습니다.',
+  emptyDescription = '새 글이 올라오면 이 자리에서 바로 볼 수 있어요.',
 }: {
   posts: Post[];
   currentPage: number;
@@ -19,7 +19,7 @@ export function PostList({
 }) {
   if (posts.length === 0) {
     return (
-      <section className="p-10 ">
+      <section className="p-10">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
           {emptyTitle}
         </h2>
@@ -31,8 +31,8 @@ export function PostList({
   }
 
   return (
-    <section className="p-6 sm:p-8 lg:p-10">
-      <div className="space-y-14">
+    <section className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         {posts.map((post) => (
           <PostListItem key={post.slug} post={post} />
         ))}
