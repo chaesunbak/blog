@@ -1,0 +1,124 @@
+---
+title: 'Tailwind CSS 4.0 주요 변경점 : CSS 우선 설정'
+description: '굿바이 config.ts'
+date: '2025-05-29'
+tags:
+  - 'TailwindCSS'
+  - 'CSS'
+thumbnail: './thumbnail.webp'
+---
+
+## Tailwind CSS 4.0 정식 출시
+
+2025년 1월 Tailwind CSS 4.0이 [정식출시](https://tailwindcss.com/blog/tailwindcss-v4))되었다. 이번 업데이트에서는 성능과 편의성 개선 뿐만아니라, 설정 방식이 크게 변경되었다. 따라서, 이번 포스팅에서는 4.0 버전의 변경사항을 간략히 정리하고, 설정 방식이 어떻게 변경되었는지 그것이 시사하는바는 무엇인지 정리해보려고 한다.
+
+## 주요 변경점
+
+- **CSS 우선 구성 (CSS First Configuration):** `tailwind.config.js`에서 벗어나 CSS 파일 내에서 직접 설정을 관리합니다.
+- **간소화된 설치**
+- **Rust 기반 Lightning CSS 엔진 도입을 통한 빌드 성능 개선**
+- **새로운 유틸리티 클래스 추가**
+
+## CSS 우선 구성(CSS First Configuration)
+
+Tailwind CSS 4.0에서 가장 큰 변경점은 바로 설정 방식이다. 기존JavaScript(`tailwind.config.js`) 기반 설정 파일에서 벗어나, 이제 CSS가 주도하는 새로운 설정 방식을 채택했다.
+
+### 이전 버전 (v3까지)의 설정 방식 : [`tailwind.config.js`](https://v3.tailwindcss.com/docs/configuration)
+
+이전 버전에서는 프로젝트 루트에 `tailwind.config.js` 파일을 생성하고, 정해진 형태의 JavaScript 객체를 `module.exports` 하는 방식으로 설정이 이루어졌다. `content` 경로, `theme` 객체를 통한 색상, 글꼴, 간격 등의 커스터마이징, 그리고 `extend`를 통한 기본 테마 확장 등이 이 파일에서 이루어졌다.
+
+```js
+// tailwind.config.js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './src/**/*.{html,js}', // 콘텐츠 파일 경로
+  ],
+  theme: {
+    colors: {
+      // 색상 정의
+      blue: '#1fb6ff',
+      purple: '#7e5bef',
+      // ... 기타 색상
+    },
+    fontFamily: {
+      // 글꼴 정의
+      sans: ['Graphik', 'sans-serif'],
+    },
+    extend: {
+      // 기본 테마 확장
+      spacing: {
+        '8xl': '96rem',
+      },
+      borderRadius: {
+        '4xl': '2rem',
+      },
+    },
+  },
+  plugins: [
+    // 플러그인 등록
+    // require('@tailwindcss/forms'),
+  ],
+};
+```
+
+이러한 방식은 강력한 커스터마이징 기능을 제공했지만, 몇가지 단점이 있었다.
+
+- **학습 곡선** : Tailwind CSS 자체의 유틸리티 클래스 외에, `config.js`의 고유한 문법과 구조를 익혀야 합니다.
+- **어색함** : CSS 스타일을 관리함에도 불구하고 JavaScript 파일과 문법을 사용해야 하는 점이 다소 어색합니다.
+
+### CSS 우선 설정
+
+Tailwind CSS 4.0부터는 주 CSS 파일(예: `global.css`) 내에서 CSS 문법을 그대로 사용하여 모든 설정을 관리할 수 있게 되었다.
+
+```css
+/* global.css (v4 예시) */
+@import 'tailwindcss'; /* Tailwind CSS 초기화 및 기본 스타일, 유틸리티 로드 */
+
+/* @theme 레이어를 사용하여 테마 값을 추가하거나 덮어씁니다. */
+@theme {
+  /* 사용자 정의 디자인 토큰 (CSS 변수로 노출됨) */
+  --font-display: 'Satoshi', 'sans-serif';
+  --breakpoint-3xl: 1920px;
+  --color-primary: oklch(0.65 0.2 250); /* OKLCH 색상 사용 */
+  --color-secondary-500: #7e5bef; /* 기존 방식의 색상도 가능 */
+
+  /* 간격 스케일 커스텀 (예시) */
+  /* --spacing-base: 0.25rem; (기본값) */
+  /* --spacing-8xl: calc(var(--spacing-base) * 96); */ /* 96rem */
+
+  /* 테마 값 직접 오버라이드 및 확장 */
+  /* 예: 기본 border-radius 변경 */
+  /* --rounded-DEFAULT: 0.375rem; */ /* 기본 rounded */
+  /* --rounded-4xl: 2rem; */ /* 새로운 rounded-4xl 추가 */
+}
+```
+
+이 새로운 접근 방식 또한 일정량의 학습을 요구한다는 단점이 있지만 장점은 명확하다.
+
+- **간결함:** 프로젝트 루트에서 `tailwind.config.js` 설정 파일 하나가 줄어들어 전체적인 구조가 단순해진다.
+- **직관성과 통합성:** CSS 스타일과 관련된 설정을 실제 CSS 파일에서 [@import](https://developer.mozilla.org/ko/docs/Web/CSS/@import), [캐스케이드 레이어](https://developer.mozilla.org/ko/docs/Web/CSS/@layer), CSS 변수 등의 CSS 문법으로 직접 다루므로 매우 직관적이다. 또한 기존의 CSS 스타일 시트와 유기적인 통합이 가능하다.
+- **전이성** : 이렇게 학습한 CSS 문법은 Tailwind CSS를 사용하지 않더라도 적용가능하다.
+
+#### 기존 `tailwind.config.js`와의 호환하기
+
+이미 `tailwind.config.js` 파일을 사용하고 있는 기존 프로젝트를 위해, Tailwind CSS 4.0은 호환성도 제공한다. CSS 파일 상단에 `@config` 지시자를 사용하여 기존 설정 파일을 가져올 수 있다.
+
+```css
+/* global.css */
+@config '../../tailwind.config.js';
+```
+
+이는 점진적인 마이그레이션을 가능하게 하며, 기존 프로젝트에 대한 부담을 줄인다.
+
+## 정리
+
+이번 Tailwind CSS 4.0 업데이트에서 CSS 우선 설정으로의 전환은 구성파일을 최소화 하는 노력의 좋은 사례로 보인다. 웹 표준과 개발자 경험을 중시하는 개발 방향이 인상적이다.
+
+## 참고자료
+
+[참고자료 1 : Tailwind CSS Core Concepts Theme variables](https://tailwindcss.com/docs/theme)
+
+[참고자료 2 : Tailwind CSS Core Concepts Adding custom styles](https://tailwindcss.com/docs/adding-custom-styles)
+
+[참고자료 3 : 개발자방16 - 구성파일이 코딩이 되는 순간 지옥입니다.](https://www.youtube.com/watch?v=m6pZ9ahaHb0)

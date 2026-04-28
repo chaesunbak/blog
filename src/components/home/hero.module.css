@@ -1,0 +1,276 @@
+:global([data-theme='sunset']) .frame {
+  --sky-bg: radial-gradient(
+      circle at 72% 22%,
+      rgba(255, 247, 173, 0.5),
+      transparent 16%
+    ),
+    linear-gradient(180deg, #ffb39f 0%, #ffd3dc 52%, #ffe6dd 100%);
+  --sun-bg: radial-gradient(
+    circle at center,
+    #fff6c5 0 35%,
+    #ffde73 36% 68%,
+    #ffc857 69% 100%
+  );
+  --wave1: rgba(133, 193, 233, 0.7);
+  --wave2: rgba(52, 152, 219, 0.7);
+  --wave3: rgba(41, 128, 185, 0.9);
+  --wave4: #1f618d;
+  --boat-filter: brightness(1);
+}
+
+:global([data-theme='morning']) .frame {
+  --sky-bg: linear-gradient(180deg, #87ceeb 0%, #e0f6ff 52%, #fff0f5 100%);
+  --sun-bg: radial-gradient(
+    circle at center,
+    #ffffff 0 35%,
+    #fffacd 36% 68%,
+    #ffe4b5 69% 100%
+  );
+  --wave1: rgba(173, 216, 230, 0.7);
+  --wave2: rgba(135, 206, 235, 0.7);
+  --wave3: rgba(70, 130, 180, 0.9);
+  --wave4: #4682b4;
+  --boat-filter: brightness(1);
+}
+
+:global([data-theme='afternoon']) .frame {
+  --sky-bg: linear-gradient(180deg, #60a5fa 0%, #bae6fd 52%, #f0f9ff 100%);
+  --sun-bg: radial-gradient(
+    circle at center,
+    #ffffff 0 35%,
+    #fef08a 36% 68%,
+    #facc15 69% 100%
+  );
+  --wave1: rgba(125, 211, 252, 0.7);
+  --wave2: rgba(56, 189, 248, 0.7);
+  --wave3: rgba(14, 165, 233, 0.9);
+  --wave4: #0284c7;
+  --boat-filter: brightness(1);
+}
+
+:global([data-theme='night']) .frame {
+  --sky-bg: radial-gradient(
+      circle at 35% 25%,
+      rgba(255, 255, 255, 0.15),
+      transparent 25%
+    ),
+    linear-gradient(180deg, #0f172a 0%, #1e293b 52%, #334155 100%);
+  --sun-bg: radial-gradient(
+    circle at center,
+    #ffffff 0 35%,
+    #f0f4f8 36% 68%,
+    #c2d1e0 69% 100%
+  );
+  --wave1: rgba(148, 163, 184, 0.5);
+  --wave2: rgba(100, 116, 139, 0.7);
+  --wave3: rgba(71, 85, 105, 0.9);
+  --wave4: #334155;
+  --boat-filter: brightness(0.7) grayscale(0.3);
+}
+
+.frame {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--sky-bg);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+}
+
+.sun {
+  position: absolute;
+  top: 16%;
+  right: 19%;
+  width: 19%;
+  height: 19%;
+  border-radius: 9999px;
+  background: var(--sun-bg);
+  transition: opacity 1s ease;
+}
+
+:global([data-theme='night']) .sun {
+  opacity: 0;
+}
+
+.boat {
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  z-index: 2;
+  animation: bobbing 3s ease-in-out infinite alternate;
+  filter: var(--boat-filter);
+}
+
+.sailBack {
+  position: absolute;
+  bottom: 1.25rem;
+  left: -0.95rem;
+  width: 0;
+  height: 0;
+  border-right: 2.5rem solid transparent;
+  border-bottom: 4.4rem solid #ff7f50;
+}
+
+.sailFront {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 0.3rem;
+  width: 0;
+  height: 0;
+  border-right: 2.15rem solid transparent;
+  border-bottom: 3.75rem solid #fdf5e6;
+}
+
+.hull {
+  position: absolute;
+  bottom: 0;
+  left: -2.3rem;
+  width: 4.6rem;
+  height: 1.25rem;
+  border-radius: 0.125rem 0.125rem 0.625rem 1.25rem;
+  background: #8b4513;
+}
+
+.hull::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -1.25rem;
+  width: 0;
+  height: 0;
+  border-bottom: 1.25rem solid #8b4513;
+  border-left: 1.25rem solid transparent;
+}
+
+.waveContainerBack {
+  position: absolute;
+  right: 0;
+  bottom: 28%;
+  left: 0;
+  height: 10%;
+  z-index: 1;
+}
+
+.waveContainerFront {
+  position: absolute;
+  right: 0;
+  bottom: 28%;
+  left: 0;
+  height: 10%;
+  z-index: 3;
+}
+
+.waterBottom {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 28%;
+  background: var(--wave4);
+  z-index: 3;
+}
+
+.stars {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 1s ease;
+  pointer-events: none;
+}
+
+:global([data-theme='night']) .stars {
+  opacity: 1;
+}
+
+.polaris {
+  position: absolute;
+  top: 25%;
+  left: 35%;
+  width: 3px;
+  height: 3px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 6px 2px rgba(255, 255, 255, 0.8);
+  animation: twinkle 3s infinite alternate;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.waves {
+  width: 100%;
+  height: 100%;
+}
+
+.parallax use {
+  animation: moveForever 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+}
+
+.wave1 {
+  animation-delay: -2s;
+  animation-duration: 7s;
+}
+
+.wave2 {
+  animation-delay: -3s;
+  animation-duration: 10s;
+}
+
+.wave3 {
+  animation-delay: -4s;
+  animation-duration: 13s;
+}
+
+.wave4 {
+  animation-delay: -5s;
+  animation-duration: 20s;
+}
+
+@keyframes moveForever {
+  0% {
+    transform: translate3d(-90px, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(85px, 0, 0);
+  }
+}
+
+@keyframes bobbing {
+  0% {
+    transform: translate(-50%, -50%) rotate(-4deg);
+  }
+
+  100% {
+    transform: translate(-50%, -35%) rotate(4deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boat,
+  .parallax use {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
+}

@@ -1,0 +1,308 @@
+---
+title: 'Supabase 타입스크립트 완벽 가이드'
+description: '우아하게 쿼리하기'
+date: '2025-05-14'
+tags:
+  - 'Supabase'
+  - 'TypeScript'
+thumbnail: './thumbnail.png'
+---
+
+Firebase 대체제로 주목받고 있는 [Supabase](https://supabase.com/)는 [PostgSQL](https://www.postgresql.org/)에 기반한 오픈소스 프로젝트다. Supabase를 사용하면 보다 빠르게 인증, DB 등을 구현할 수 있다. Supabase는 데이터베이스 스키마에서 타입스크립트 타입을 추출할 수 있는 강력한 기능을 제공하며, 이는 개발자가 타입을 일일히 작성해야하는 수고로움을 줄여 매우 유용하다. 이 글에서는 Supabase로 프로젝트를 진행하며 학습한 Supabase의 타입 생성 방법과 실제 활용법을 정리하고 공유한다.
+
+## 타입 생성하는 2가지 방법
+
+### 대쉬보드에서 다운로드받기
+
+- Supabase 프로젝트 대시보드에 접속한 후, 좌측 메뉴에서 `API Docs` > `TABLES AND VIEW` > `Introduction` 선택
+- `Generate and download types` 버튼 클릭
+- 내 프로젝트 타입 파일에 추가 (예 : `@types/database.types.ts`)
+
+### Supabase CLI 사용하기(권장)
+
+1.  **Supabase CLI 설치하기**
+
+개발 의존성으로 supabase cli 설치
+
+```bash
+npm i supabase@">=1.8.1" --save-dev
+```
+
+1.  **Supabase 로그인하기**
+
+안내에 따라 로그인 한다.
+
+```bash
+npx supabase login
+```
+
+2.  **Supabase 프로젝트 초기화하기**
+
+이미 초기화를 완료했다면 생략해도 된다.
+
+```bash
+npx supabase init
+```
+
+3.  **타입 생성하기**
+
+원격 프로젝트의 경우
+
+```bash
+npx supabase gen types typescript --project-id "$PROJECT_REF" --schema public > database.types.ts
+```
+
+- `$PROJECT_REF`: Supabase 프로젝트의 참조 ID입니다. (대시보드의 `Project Settings` > `General` 에서 확인 가능)
+- `-schema public`: `public` 스키마에 있는 테이블, 뷰, 함수 등에 대한 타입을 생성합니다. 만약 `auth`, `storage` 또는 사용자가 직접 만든 커스텀 스키마의 타입을 생성하고 싶다면, 쉼표로 구분하여 `-schema public,auth,storage,custom_schema` 와 같이 여러 스키마를 지정할 수 있다.
+- `> src/database.types.ts`: 생성된 타입을 저장할 경로와 파일명을 지정한다. (예: `src` 폴더 아래)
+
+로컬 개발 환경인 경우 (Supabase를 로컬에서 Docker 등으로 실행 중일 때)
+
+```bash
+npx supabase gen types typescript --local > database.types.ts
+```
+
+## 생성된 타입 둘러보기
+
+위 방법을 실행하면 다음과 같은 타입 정의 파일(`database.types.ts`)이 생성된다.
+
+```ts
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+
+export interface Database {
+  public: {
+    Tables: {
+      movies: { // 테이블 이름 (예: movies)
+        Row: { // .select() 호출 시 반환되는 데이터의 타입
+          id: number
+          name: string
+          data: Json | null
+          created_at: string
+        }
+        Insert: { // .insert() 호출 시 전달해야 하는 데이터의 타입
+          id?: never
+          name: string
+          data?: Json | null
+          created_at?: string
+        }
+        Update: { // .update() 호출 시 전달해야 하는 데이터의 타입
+          id?: never
+          name?: string
+          data?: Json | null
+          created_at?: string
+        }
+        Relationships: [ // 관계 정의 (Foreign Keys)
+          // ... 관계 정의가 있다면 여기에 표시됨
+        ]
+      }
+      // ... 다른 테이블들
+    }
+    Views: { // 뷰 목록 (View가 있다면)
+    }
+    Functions: { // 함수 목록 (함수가 있다면)
+    }
+    Enums: { // Enum 타입 목록 (Enum이 있다면)
+    }
+    CompositeTypes: { // 복합 타입 목록
+    }
+  }
+}
+
+...
+```
+
+## 활용법
+
+### Supabase 클라이언트에 타입 적용하기
+
+생성된 `Database` 타입을 Supabase 클라이언트 초기화 시 [제네릭](https://www.typescriptlang.org/ko/docs/handbook/2/generics.html)으로 전달한다.
+
+```ts
+import { createClient } from '@supabase/supabase-js'
+import { Database } from './database.types'
+const supabase = createClient<Database>(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY
+```
+
+이제 `supabase` 클라이언트를 사용하여 쿼리를 작성할 때, 테이블명, 컬럼명, 반환값 등에 대해 자동완성 및 타입 체크의 이점을 누릴 수 있다.
+
+```ts
+async function getMovieTitle(movieId: number) {
+  const { data, error } = await supabase
+    .from('movies') // 'movies' 자동완성
+    .select('name') // 'name' 자동완성, 다른 컬럼도 가능
+    .eq('id', movieId)
+    .single();
+
+  if (error) throw error;
+  // data는 { name: string } | null 타입으로 추론됨
+  return data?.name;
+}
+```
+
+### 타입 추출하기
+
+생성된 타입 파일에서 직접 필요한 타입을 추출하여 변수, 함수 파라미터, 반환 타입 등으로 명시적으로 사용할 수 있다.
+
+```ts
+import { type Database, type Tables, type Enums } from '../database.types';
+
+type Movie = Tables<'movies'>; // Database['public']['Tables']['movies']['Row'] 와 동일
+let movie: Movie;
+
+type UserStatus = Enums<'user_status'>; // Database['public']['Enums']['user_status'] 와 동일
+let currentUserStatus: UserStatus = 'ACTIVE';
+
+import { type TablesInsert, type TablesUpdate } from '../database.types';
+
+type MovieInsert = TablesInsert<'movies'>; // Tables<'movies'>['Insert']와 같음
+
+function addMovie(newMovie: MovieInsert) {
+  // ... supabase.from('movies').insert(newMovie)
+}
+```
+
+### 조인 쿼리의 타입 구하기
+
+테이블 간 조인(join)을 포함하는 복잡한 쿼리의 결과 타입을 정확하게 얻고 싶을 때 `QueryData` 헬퍼 타입을 사용할 수 있다.
+
+```sql
+-- 테이블 구조
+create table countries (
+  id serial primary key,
+  name text
+);
+create table cities (
+  id serial primary key,
+  name text,
+  country_id int references countries(id)
+);
+```
+
+```ts
+import { type QueryData } from '@supabase/supabase-js';
+// ... supabase 클라이언트 설정
+
+const query = supabase.from('countries').select(`
+  id,
+  name,
+  cities (
+    id,
+    name
+  )
+`);
+
+// QueryData를 사용하여 query의 예상 결과 데이터 타입을 추출
+type CountriesWithCities = QueryData<typeof query>;
+
+async function getCountriesAndCities() {
+  const { data, error } = await query;
+  if (error) throw error;
+
+  // 이제 data는 CountriesWithCities 타입으로 강력하게 타이핑됨
+  const countries: CountriesWithCities = data;
+  countries.forEach((country) => {
+    console.log(country.name); // 'name' 자동완성
+    country.cities.forEach((city) => {
+      // 'cities' 자동완성 (배열)
+      console.log(city.name); // city 안의 'name' 자동완성
+    });
+  });
+}
+```
+
+이외에도 자동생성된 타입이 기대와 다를 때 수행할 수 있는 타입 오버라이드 등과 같은 고급 타입 활용이 공식문서에 있으므로, 포스팅을 다 읽고 꼭 공식문서를 확인하는 것을 권장한다.
+
+[참고자료 1 : Supabse : REST API > Generating TypeScript Types](https://supabase.com/docs/guides/api/rest/generating-types)
+
+## 타입 업데이트 자동화하기
+
+### 1\. `package.json`에 스크립트 추가하기
+
+[`supabase gen types`](https://supabase.com/docs/reference/cli/supabase-gen-types) 명령어를 `package.json`의 `scripts`에 추가하여 쉽게 실행할 수 있도록 한다.
+
+```json
+// package.json
+{
+  "scripts": {
+    "update-types": "supabase gen types typescript --project-id \"$PROJECT_REF\" --schema public > src/database.types.ts",
+    "update-types:local": "supabase gen types typescript --local > src/database.types.ts"
+    // ... 다른 스크립트들
+  }
+}
+```
+
+- `$PROJECT_REF`는 실제 값으로 변경한다.
+- 이제 `npm run update-types` (또는 `yarn update-types`) 명령으로 타입을 업데이트할 수 있다.
+- 개인 작업 시에는 데이터베이스 스키마 변경 후 이 명령어를 실행하는 것만으로도 충분할 수 있다.
+
+### 2\. 깃헙 Actions 사용하기
+
+팀 단위로 작업하거나 주기적으로 자동 업데이트를 원한다면 GitHub Actions를 활용하는 것이 매우 효과적이다.
+
+1.  깃헙 시크릿, 환경변수 설정
+2.  깃헙 워크 플로우 파일 생성
+
+```yml
+//.github/workflows/update-types.yml
+
+name: Update Supabase Database Types
+
+on:
+  schedule:
+    # 매일 자정(UTC)에 실행 (cron 표현식, 필요에 따라 수정)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 수동 실행도 가능하도록 추가
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 리포지토리에 코드 push 권한 부여
+
+    env:
+      PROJECT_REF: ${{ secrets.PROJECT_REF }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      # 타입 파일 경로를 프로젝트에 맞게 수정
+      TYPE_FILE_PATH: src/database.types.ts
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false # github-actions[bot]으로 커밋하기 위함
+          fetch-depth: 0 # 마지막 커밋 이후의 모든 변경사항을 가져오기 위함
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # 프로젝트에 맞는 Node.js 버전 사용
+
+      - name: Install Supabase CLI (and other dependencies if needed)
+        run: npm install supabase@latest --save-dev # 또는 yarn add supabase@latest --dev
+        # package-lock.json 또는 yarn.lock이 있다면 npm ci 또는 yarn install 권장
+
+      - name: Update database types
+        run: npx supabase gen types typescript --project-id "$PROJECT_REF" --schema public > $TYPE_FILE_PATH
+        # 로컬 환경이라면: npx supabase gen types typescript --local > $TYPE_FILE_PATH
+
+      - name: Check for file changes
+        id: git_status
+        run: |
+          echo "status=$(git status -s $TYPE_FILE_PATH)" >> $GITHUB_OUTPUT
+
+      - name: Commit and push if changes exist
+        if: steps.git_status.outputs.status != '' # 변경 사항이 있을 때만 실행
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add $TYPE_FILE_PATH
+          git commit -m "chore: Update database types" -a
+          git push
+        # 커밋 메시지는 팀 컨벤션에 맞게 수정
+```
+
+커뮤니티에서 지원하는 [`generate-supabase-db-types-github-action`](https://github.com/lyqht/generate-supabase-db-types-github-action)과 같은 액션을 사용하는 것도 좋은 선택이다.
+
+## 회고
+
+Supabase의 타입 시스템을 깊이 사용해보면서, 제네릭(Generics)의 엄청난 파워에 감탄할 수 있었다. `createClient<Database>`로 클라이언트 전체의 데이터베이스 구조를 인식시키는 것부터 시작해서, `Tables<'테이블명'>`이나 `QueryData<typeof 쿼리>` 같은 제네릭 헬퍼 타입을 활용하면서 매우 편리함을 느꼈다. “잘만든 제네릭 타입이 개발자를 편하게 한다”를 느낄 수 있었다.

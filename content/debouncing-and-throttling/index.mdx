@@ -1,0 +1,218 @@
+---
+title: '클로저로 디바운싱과 스로틀링 구현하기'
+description: '이 정도는 할 수 있어야겠지?'
+category: '위키'
+date: '2025-10-19'
+tags:
+  - 'JavaScript'
+  - 'Closure'
+---
+
+## 이벤트 그룹화
+
+여러 이벤트가 짧은 시간 간격으로 연속해서 발생하는 경우, 이러한 이벤트에 바인딩한 이벤트 핸들러가 과도하게 호출될 경우 성능에 문제를 일으킬 수 있다. 디바운싱(Debouncing)과 스로틀링(Throttling)은 짧은 시간 간격으로 연속해서 발생하는 이벤트를 그룹화해서 과도한 이벤트 핸들러의 호출을 방지하는 프로그래밍 기법이다.
+
+## 디바운싱
+
+디바운싱는 짧은 시간 간격으로 이벤트가 연속해서 발생하면 이벤트 핸들러를 호출하지 않다가 일정 시간이 경과한 이후에 이벤트 핸들러가 한 번만 호출되도록 한다. 즉, 디바운싱은 짧은 시간 간격으로 발생하는 이벤트를 그룹화해서 마지막에 한 번만 이벤트 핸들러가 호출되도록 한다. (예: 검색어 자동 완성)
+
+## 스로틀링
+
+스로틀링은 짧은 시간 간격으로 이벤트가 연속해서 발생하더라도 일정 시간 간격으로 이벤트 핸들러가 최대 한 번만 호출되도록 한다. 즉, 스로틀링은 짧은 시간 간격으로 연속해서 발생하는 이벤트를 그룹화해서 일정 시간 단위로 이벤트 핸들러가 호출되도록 호출 주기를 만든다. (예: 스크롤 이벤트, 무한 스크롤)
+
+## 간단하게 디바운싱 구현하기
+
+디바운스 로직을 간단하게 정리하면 다음과 같다.
+
+1.  이벤트가 발생하면 이벤트 햄들러 함수를 주어진 시간 이후에 실행하는`setTimeout`을 등록한다.
+2.  주어진 기간 내에 이벤트가 다시 발생하면 해당 타이머를 취소하고 새로 등록한다.
+3.  주어진 기간 내에 이벤트가 발생하지 않아 타이머가 취소되지 않으면, 이벤트 핸들러가 실행된다.
+
+```js
+// 예시: 1초(1000ms)간의 디바운싱
+const button = document.querySelector('#myButton');
+
+let timerId; // 타이머 ID를 저장할 변수
+
+button.addEventListener('click', () => {
+  // 1. 이전에 등록된 타이머가 있다면 취소
+  if (timerId) {
+    clearTimeout(timerId);
+  }
+
+  // 2. 새로운 타이머 등록
+  // 1초 뒤에 이벤트 핸들러가 실행됨
+  timerId = setTimeout(() => {
+    // 3. 취소되지 않은 경우 이벤트 핸들러 실행
+    console.log('디바운싱된 클릭 이벤트!');
+    timerId = null; // 실행 후에는 타이머 ID 초기화
+  }, 1000);
+});
+```
+
+## 간단하게 스로틀링 구현하기
+
+스로틀링을 구현하는 방법은 크게 두 가지가 있다.
+
+### (1) `setTimeout`과 플래그 변수를 이용한 방식
+
+이벤트가 발생했을 때 플래그 변수를 확인하여, `true`이면 아무것도 하지 않고 `false`이면 핸들러를 실행하고 플래그를 `true`로 설정한다. 그리고 일정 시간 뒤 `setTimeout`을 통해 플래그를 다시 `false`로 변경한다.
+
+```js
+const container = document.querySelector('.container');
+let throttleWait = false; // 스로틀 플래그
+
+container.addEventListener('scroll', () => {
+  // 1. 플래그가 true이면 (즉, 대기 시간이면) 아무것도 안함
+  if (throttleWait) {
+    return;
+  }
+
+  // 2. 플래그를 true로 설정
+  throttleWait = true;
+  console.log('스로틀링된 스크롤 이벤트 발생!');
+
+  // 3. 1초 뒤에 플래그를 false로 복귀
+  setTimeout(() => {
+    throttleWait = false;
+  }, 1000);
+});
+```
+
+### (2) Timestamp (`Date.now()`)를 이용한 방식
+
+마지막으로 이벤트 핸들러가 실행된 시간을 저장해두고, 현재 시간과 비교하여 일정 시간이 경과했을 때만 핸들러를 실행한다.
+
+```js
+const container = document.querySelector('.container');
+let lastTime = 0; // 마지막 실행 시간을 저장할 변수
+const throttleDelay = 1000; // 1초
+
+container.addEventListener('scroll', () => {
+  const now = Date.now();
+
+  // 1. 현재 시간과 마지막 실행 시간의 차이가 delay보다 크면 실행
+  if (now - lastTime > throttleDelay) {
+    console.log('스로틀링된 스크롤 이벤트 발생!');
+    // 2. 마지막 실행 시간을 현재 시간으로 갱신
+    lastTime = now;
+  }
+});
+```
+
+## 클로저 활용하여 중복 코드 줄이기
+
+만약 디바운싱을 여러 버튼이나 이벤트에 적용하고 싶다면 다음과 같이 코드를 작성할 수 있다.
+
+```js
+const button1 = document.querySelector('#button1');
+const button2 = document.querySelector('#button2');
+const delay = 1000;
+
+// 버튼 1에 대한 디바운스 로직
+let timerId1;
+button1.addEventListener('click', () => {
+  if (timerId1) {
+    clearTimeout(timerId1);
+  }
+  timerId1 = setTimeout(() => {
+    console.log('버튼 1 클릭!');
+    timerId1 = null;
+  }, delay);
+});
+
+// 버튼 2에 대한 디바운스 로직
+let timerId2;
+button2.addEventListener('click', () => {
+  if (timerId2) {
+    clearTimeout(timerId2);
+  }
+  timerId2 = setTimeout(() => {
+    console.log('버튼 2 클릭!');
+    timerId2 = null;
+  }, delay);
+});
+```
+
+`timerId1`, `timerId2`처럼 상태를 관리하기 위한 변수와 타이머 로직이 중복됨을 확인할 수 있다. 이때 이밴트 핸들러함수를 받아 디바운싱이 적용된 함수를 반환하는 고차 함수를 구현하면 중복 코드를 줄일 수 있다. 또한, **각 디바운싱이 적용된 함수의 타이머아이디를 저장하기 위해 클로저(Closure) 를 활용할 수 있다.**
+
+`debounce` 함수는 실행할 콜백 함수(`func`)와 지연 시간(`delay`)을 인자로 받는다. 이 함수는 내부 변수로 `timerId`를 가진다. 그리고 `timerId`를 참조하는 새로운 함수를 반환한다.
+
+반환된 함수가 실행될 때마다, 이 함수는 렉시컬 환경에 저장된 `timerId`에 접근하여 타이머를 취소하거나 새로 등록한다. 이 `timerId`는 `debounce` 함수가 반환한 함수(클로저)만이 접근할 수 있는 '비공개' 변수처럼 동작한다.
+
+```js
+/**
+ * 디바운스 함수를 생성하는 고차 함수
+ * @param {Function} func - 디바운싱을 적용할 실제 핸들러 함수
+ * @param {number} delay - 지연 시간 (ms)
+ * @returns {Function} - 디바운싱이 적용된 새로운 함수
+ */
+function debounce(func, delay) {
+  // timerId는 debounce 함수의 렉시컬 환경에 저장됨
+  let timerId;
+
+  // 클로저인 이 함수가 반환됨
+  // 이 함수는 생성될 때의 렉시컬 환경(timerId)을 기억함
+  return function (...args) {
+    // this와 arguments(이벤트 객체 등)를 원본 함수에 그대로 전달
+    const context = this;
+
+    // 1. 기존 타이머가 있다면 취소
+    if (timerId) {
+      clearTimeout(timerId);
+    }
+
+    // 2. 새로운 타이머 설정
+    timerId = setTimeout(() => {
+      // 3. 지연 시간이 지난 후, 원본 함수 실행
+      func.apply(context, args);
+      timerId = null;
+    }, delay);
+  };
+}
+
+// --- 사용 예시 ---
+
+const button1 = document.querySelector('#button1');
+const button2 = document.querySelector('#button2');
+
+// 디바운싱 로직이 캡슐화된 핸들러 생성
+// debouncedClick1과 debouncedClick2는 각자 독립된 timerId를 가짐
+const debouncedClick1 = debounce(() => {
+  console.log('버튼 1 클릭!');
+}, 1000);
+
+const debouncedClick2 = debounce((event) => {
+  console.log('버튼 2 클릭!', event.target);
+}, 1000);
+
+// 이벤트 리스너에 등록
+button1.addEventListener('click', debouncedClick1);
+button2.addEventListener('click', debouncedClick2);
+```
+
+이렇게 클로저를 활용하면 `timerId`와 같은 상태 변수를 외부 스코프에 불필요하게 노출하지 않고, 각 이벤트 핸들러가 자신만의 독립적인 `timerId`를 갖도록 캡슐화할 수 있어 훨씬 깔끔하고 재사용 가능한 코드를 작성할 수 있다. 스로틀링 역시 동일한 방식으로 구현할 수 있다.
+
+## 실제로 사용하기
+
+실제 현업에서 사용되는 디바운싱, 스로틀링 함수는 더 많은 엣지 케이스를 고려한다.
+
+- **리딩(Leading) / 트레일링(Trailing) 옵션**: 이벤트를 그룹화할 때, 맨 처음 이벤트 발생 시 핸들러를 즉시 실행할지(leading), 아니면 마지막 이벤트 발생 후 일정 시간 뒤에 실행할지(trailing, 우리가 구현한 방식) 선택할 수 있다.
+- **최대 대기 시간(maxWait) 옵션**: 디바운싱의 경우, 이벤트가 끊임없이 발생하면 핸들러가 영원히 실행되지 않을 수 있다. 이를 방지하기 위해 최대 대기 시간을 설정하여, 이벤트가 계속되더라도 일정 시간이 지나면 무조건 핸들러를 실행하게 한다.
+- **예약 함수 취소 (`.cancel()`)**: `setTimeout`으로 예약된 핸들러 실행을 강제로 취소하는 기능.
+- **강제 즉시 실행 (`.flush()`)**: 대기 중인 핸들러를 즉시 실행하는 기능입.
+- **실행 대기 중 확인 (`.pending()`)**: 현재 핸들러 실행이 대기 중인지 상태를 확인하는 기능.
+
+이러한 옵션들을 모두 고려하면 코드가 매우 복잡해진다. 따라서 대부분의 프로젝트에서는 해당 함수를 직접 구현하기보다는, 이미 잘 구현되고 검증된 라이브러리를 사용한다.
+
+대표적인 라이브러리로는 Lodash가 있다.
+
+- Lodash `debounce` 소스 코드: [https://github.com/lodash/lodash/blob/main/lodash.js#L10372](https://github.com/lodash/lodash/blob/main/lodash.js#L10372)
+- Lodash `throttle` 소스 코드: [https://github.com/lodash/lodash/blob/main/lodash.js#L10965](https://github.com/lodash/lodash/blob/main/lodash.js#L10965)
+
+```js
+import { debounce, throttle } from 'lodash-es';
+```
+
+Lodash는 수년간 전 세계 수많은 프로젝트에서 검증된, 사실상의 업계 표준 라이브러리이므로 신뢰할 수 있다.  
+참고자료 : [npm trends](https://npmtrends.com/lodash-vs-lodash-es-vs-lodash.debounce-vs-lodash.throttle)

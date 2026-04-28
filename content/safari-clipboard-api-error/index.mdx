@@ -1,0 +1,78 @@
+---
+title: '사파리 Clipboard API NotAllowedError'
+category: '트러블슈팅'
+date: '2026-04-09'
+---
+
+## 문제상황
+
+특정 브라우저(Safari)에서만 Clipboard API 사용시 NotAllowedError가 발생하는 이슈가 있었다.
+
+### 문제의 코드
+
+```js
+ async function handleShare(text){
+    // 로깅용 fetch
+    fetch(...)
+
+    // 클립보드 복사
+    await navigator.clipboard.writeText(text);
+    // ❌ : NotAllowedError!
+}
+```
+
+## Safari에서만 NotAllowedError가 발생한 이유
+
+> The Clipboard API allows users to programmatically read and write text and other kinds of data to and from the system clipboard in [secure contexts](https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Secure_Contexts).
+>
+> …
+>
+> For writing to the clipboard the specification expects that the page has been granted the [Permissions API](https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API) `clipboard-write` permission, and the browser may also require [transient user activation](https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/User_activation). Browsers may place additional restrictions over use of the methods to access the clipboard.
+>
+> [mdn : Clipboard API](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API)
+
+Safari에서 Clipboard API를 사용하려면 클릭 이벤트 등 일시적 사용자 활성화가 필요하다. **클릭 사용자 이벤트와 Clipboard API 호출 사이에 다른 작업이 끼어들면서 NotAllowedError가 발생한 것이다.**
+
+### 해결방법
+
+사용자 이벤트와 Clipboard API를 최대한 가깝게 유지한다. 중간에 fetch같은 작업을 끼우지 않는다.
+
+```js
+ async function handleShare(text){
+    // 클립보드 복사
+    await navigator.clipboard.writeText(text);
+    // ✅ OK
+
+    // 로깅용 fetch
+    fetch(...)
+}
+```
+
+예외 처리를 보다 친절하게 해보자.
+
+```js
+async function handleShare(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    // 사용자에게 피드백을 주세요(그렇지 않으면 사용자는 '반응이없네?' 라고 느낍니다.)
+    toast.error('복사에 실패했어요.');
+
+    // 대체 수단을 제공하세요
+    showDialog(`다음 텍스트를 복사하세요 ${text}`);
+
+    // 로깅만 하지 말아줘잉
+    logError(e);
+  }
+}
+```
+
+## 교훈
+
+웹 API를 사용할 때는 해당 API가 어떤 에러를 던질 수 있는지 꼭 확인해야한다. mdn 정독 필수.
+
+해당 버그는 공유 기능 구현 시점이 아닌, 이후 로깅 기능을 추가하는 과정에서 발생했다. (왜 저기다 추가했지...?) E2E 테스트 자동화를 통해 크로스 브라우징 이슈를 검증하자.
+
+## 참고자료
+
+[Safari Clipboard Errors: NotAllowedError and TypeError Fixes](https://medium.com/@hailieejkim/safari-clipboard-errors-notallowederror-and-typeerror-fixes-e9c23becd856)

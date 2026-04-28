@@ -1,0 +1,356 @@
+---
+title: '클래스로 리액트 상태관리하기? (클래스 컴포넌트 아님)'
+description: '상태관리 3파전의 토론 구경하세요'
+date: '2025-08-14'
+tags:
+  - 'React'
+---
+
+## class로 상태 관리하기?
+
+[학점은행제 플래너](https://planner.chaesunbak.com/) 앱의 핵심 로직은 사용자가 입력한 학점은행제 플랜을 복잡한 규칙에 따라 검증하는 것이었다. 개발 초기 필요한 데이터와, 자료구조, 입출력 타입이 정해지지 않은 상황에서, `class`로 서비스 로직을 분리하고 클래스 인스턴스로 상태를 관리하는게 어떨까라는 생각이 들었다. 하위 클래스를 조립하는 방식으로 만들어 모듈화할 수 있고 테스트 코드를 작성하기도 용이하다고 생각했다. 물론 클래스 인스턴스를 리액트 상태로 관리하는 것이 까다롭고 권장되지 않는다는 것도 어렴풋이 알고 있었다. 하지만, UI 작업 이전에 서비스 로직을 먼저 구현할 필요성을 느꼈고 `class`가 좋은 선택지로 보였다.
+
+## 열띤 토론
+
+해당 방식으로 개발하며 이러한 방식의 장단점을 느껴볼 수 있었고, 개발완료 이후에는 해당 이슈에 관한 다른 의견이 궁금해서 리서치를 해 보았다. 그 결과 레딧에서 열띤 [토론](https://www.reddit.com/r/react/comments/1ja7n19/working_with_classes_in_react_not_react_class/)을 찾을 수 있었다. 나의 개발 경험, 레딧 토론, 그외 참고자료들을 정리해보면서, 상태 관리와 프로그래밍 패러다임, 관심사 분리에 대한 좋은 인사이트를 얻을 수 있을 것 같아, 이 이슈에 관한 여러 입장들을 정리해보려 한다.
+
+## 1\. 클래스파
+
+내가 시도했던 방법. 핵심 로직을 담은 클래스를 만들고, 그 인스턴스를 상태로 관리하는 방법이다.
+
+```tsx
+//src/components/App.tsx
+export function App() {
+  const [planner, setPlanner] = useState<CreditBankPlanner | null>(null);
+
+  // ...
+}
+```
+
+```ts
+//src/service/CreditBankPlanner.ts
+export class CreditBankPlanner {
+  public degreeProgram: DegreeProgram;
+  public major: Major;
+  public errors: CreditBankPlannerError[] = [];
+
+  constructor(
+    degreeProgram: DegreeProgram = '학사',
+    major: Major = '컴퓨터공학학사',
+  ) {
+    this.degreeProgram = degreeProgram;
+    this.major = major;
+    this.setupManagers();
+  }
+
+  public addCredit(type: CreditType, payload: CreditPayload) {
+    // ...
+  }
+
+  public validateTotalCredits(): void {
+    // ...
+  }
+
+  private setupManagers() {
+    // CertificateManager, SelfEducationManager 등을 초기화
+  }
+}
+```
+
+이 방식의 가장 큰 장점은 UI와 비즈니스 로직의 상태를 명확히 분리할 수 있다는 점이다. 캡슐화, 상속 등 객체지향의 특징을 활용해 복잡한 로직을 체계적으로 구성할 수 있고, 로직을 먼저 완성한 뒤 UI를 붙이는 개발 방식도 가능해진다.
+
+하지만, 상태변경에서 유의해야할 점이 있다. 리액트에서 상태변경은 상태를 직접 변경하는 것이 아니라 `setState`함수를 통해 변경되야 하므로 상태 업데이트에 추가적인 로직이 필요하다.
+
+```ts
+// 메서드를 실행한다고 해서 상태가 변경되지 않아요.
+planner.addCredit('certificate', { name }); // X. 리렌더링이 되지도 않고 버그를 유발해요.
+
+// 메서드를 실행이후 변경된 인스턴스를 setState함수에 전달해야 해요.
+// 이걸 구현하기 위해 두가지 방법이 있을 수 있어요.
+// 방법 1: 메서드가 항상 새 인스턴스를 반환하도록 설계
+const addCertificateCredit = (name) => {
+  const newPlanner = planner.addCredit('certificate', { name });
+  setPlanner(newPlanner);
+};
+
+// 방법 2: 메서드 호출 후 수동으로 리렌더링 트리거
+const addCertificateCredit = (name) => {
+  planner?.addCredit('certificate', { name });
+  setPlanner(clonePlanner(planner));
+};
+
+function clonePlanner(planner) {
+  if (!planner) return planner;
+
+  return Object.assign(Object.create(Object.getPrototypeOf(planner)), planner);
+}
+```
+
+또한, 모든 상태가 하나의 거대한 객체로 관리된다는 점도 문제다. 작은 변화에도 전체 `planner` 인스턴스가 교체되므로, `planner`를 props로 받는 모든 자식 컴포넌트가 불필요하게 리렌더링된다.
+
+```tsx
+//src/components/App.tsx
+export function App() {
+  const [planner, setPlanner] = useState<CreditBankPlanner | null>(null);
+
+  //1. triggerPlannerRerender() 호출 시 새 인스턴스로 교체해요.
+  const addCertificateCredit = (name) => {
+    planner?.addCredit('certificate', { name });
+    setPlanner(clonePlanner(planner));
+  };
+
+  // ...
+  // 2. 실제 값은 같더라도 주소 값이 다르므로
+  // planner를 사용하는 모든 자식 컴포넌트가 리렌더링되요.
+  return (
+    <main>
+      <CertificateManager
+        certCredits={planner.certificateManager.credits}
+        errors={planner.certificateManager.errors}
+        onAdd={addCertificateCredit}
+      />
+      <SelfEducationManager
+        selfCredits={planner.selfeducationManager.credits}
+        errors={planner.selfeducationManager.errors}
+        onRemove={removeSelfCredit}
+      />
+      {/* ... */}
+    </main>
+  );
+}
+```
+
+장점
+
+- UI와 비즈니스 로직의 관심사가 명확히 분리된다.
+- 상속, 캡슐화 등 OOP의 장점을 활용해 복잡한 로직을 모델링하기 좋다..
+- 로직을 먼저 구현하고 테스트한 후 UI 개발을 진행할 수 있다.
+
+단점
+
+- 리액트의 상태 관리 방식과 맞지 않아 상태 업데이트를 위한 추가적인 코드가 필요하다.
+- 상태가 하나의 거대한 객체로 관리되어, 세밀한 리렌더링 최적화가 매우 까다롭다.
+
+이런 불편함을 해소하기 위해 [`Valtio`](https://github.com/pmndrs/valtio)나 [`MobX`](https://github.com/mobxjs/mobx) 같은 라이브러리가 존재한다. 이들은 Proxy를 활용해 클래스 인스턴스의 특정 속성이 변경되는 것을 감지하고, 해당 속성을 사용하는 컴포넌트만 자동으로 리렌더링해주는 방식으로 위 단점을 해결한다.
+
+```tsx
+// Valtio 예시
+import { proxy, useSnapshot } from 'valtio';
+
+const plannerState = proxy(new CreditBankPlanner());
+
+function CertificateManager() {
+  const snap = useSnapshot(plannerState);
+
+  return <div>{snap.certificateManager.credits.length}</div>;
+}
+
+// MobX 예시
+import { makeAutoObservable } from 'mobx';
+import { observer } from 'mobx-react-lite';
+
+class MobxPlanner {
+  credits = [];
+
+  constructor() {
+    makeAutoObservable(this);
+  }
+
+  addCredit(credit) {
+    this.credits.push(credit);
+  }
+}
+
+const plannerStore = new MobxPlanner();
+
+const CertificateManager = observer(() => {
+  return <div>{plannerStore.credits.length}</div>;
+});
+```
+
+## 2\. 순정파
+
+`class`는 자바스크립트의 문법적 설탕(Syntactic Sugar)일 뿐이라고 주장하는 관점. 컴포넌트와 타입만으로 `class` 문법 없이도 객체지향프로그래밍이 가능하다고 본다.
+
+상태를 기능에 따라 잘게 쪼개 `useState`로 관리하고. 상태 전달은 Props Drilling을 기본으로 한다. 상태에서 파생된 데이터는 순수 함수를 이용해 계산한다. 매우 교과서적이다.
+
+```ts
+//src/lib/planner-core.ts
+export function computeTotals(certCredits, selfCredits, lecCredits) {
+  // ...
+}
+
+export function validatePlanner(input) {
+  // ...
+}
+```
+
+```tsx
+//src/components/App.tsx
+export function App() {
+  const [selectedProgram, setSelectedProgram] = useState<DegreeProgram | null>(
+    null,
+  );
+  const [selectedMajor, setSelectedMajor] = useState<Major | null>(null);
+  const [certCredits, setCertCredits] = useState<CertificateCredit[]>([]);
+  const [selfCredits, setSelfCredits] = useState<SelfEducationCredit[]>([]);
+
+  const totals = computeTotals(certCredits, selfCredits, lecCredits);
+  const required = getRequiredCredits(selectedProgram);
+  const certErrors = validateCertificates(
+    selectedProgram,
+    selectedMajor,
+    certCredits,
+  );
+  const selfErrors = validateSelfEducation(selfCredits);
+
+  // ...
+
+  return (
+    <main>
+      <CertificateManager
+        selectedCertificates={certCredits}
+        errors={certErrors}
+        onAdd={addCertificateCredit}
+      />
+      <SelfEducationManager
+        selectedSelfEducation={selfCredits}
+        errors={selfErrors}
+        onRemove={removeSelfCredit}
+      />
+      {/* ... */}
+    </main>
+  );
+}
+```
+
+장점
+
+- 상태가 세분화되어 있어 필요한 부분만 리렌더링하는 전략을 세우기 용이하다.
+- `useMemo`, `useCallback` 등을 활용한 메모이제이션 최적화가 직관적이다.
+- 리액트의 패러다임과 일치하여 생태계의 다른 도구들과 함께 사용하기 좋다.
+
+단점
+
+- 상태와 로직이 여러 컴포넌트와 Hooks에 분산될 수 있다. (장점일 수도?)
+- 상태를 하위 컴포넌트로 전달하기 위한 props drilling이 발생할 수 있다.
+
+복잡하게 얽힌 상태 로직은 [`useReducer`](https://ko.react.dev/reference/react/useReducer)를 사용해 컴포넌트 밖으로 분리하여 관리할 수 있다. 여러 상태 업데이트 로직이 하나의 `dispatch` 함수로 통합되어 코드가 더 깔끔해진다. 또한 props drilling을 피하고 싶다면 [`Context API`](https://ko.react.dev/reference/react/createContext)를 사용할 수 도 있다.
+
+Before
+
+```tsx
+// App.tsx
+const addCertificateCredit = (name: string) => {
+  // ...
+};
+
+const removeCertificateCredit = useCallback((id: string) => {
+  // ...
+}, []);
+```
+
+After
+
+```ts
+// reducer.ts
+export function plannerReducer(state, action) {
+  switch (action.type) {
+    case 'ADD_CERTIFICATE':
+      return updateCertificates(state, action.payload);
+    case 'REMOVE_CERTIFICATE':
+      return removeCertificate(state, action.payload.id);
+    default:
+      return state;
+  }
+}
+```
+
+```tsx
+// App.tsx
+import { useReducer } from 'react';
+
+const [state, dispatch] = useReducer(plannerReducer, initialState);
+
+const addCertificateCredit = (name) => {
+  dispatch({ type: 'ADD_CERTIFICATE', payload: { name } });
+};
+
+const removeCertificateCredit = (id) => {
+  dispatch({ type: 'REMOVE_CERTIFICATE', payload: { id } });
+};
+```
+
+## 3\. 상태관리 라이브러리파
+
+`Zustand`, `Redux`같은 상태관리 라이브러리로 로직을 분리하는 방식. 클래스파와 마찬가지로 UI와 로직을 분리한다는 목표는 같지만, 그 도구로 클래스 인스턴스가 아닌 '스토어(Store)'를 사용한다.
+
+특히 최신 상태관리 라이브러리들은 여러 개의 스토어를 만드는 'Slice' 패턴을 지원하여, 거대한 단일 스토어의 단점을 보완하고 로직을 깔끔하게 모듈화할 수 있다.
+
+```ts
+// src/store/plannerStore.ts
+import { create } from 'zustand';
+
+export const usePlannerStore = create((set) => ({
+  certCredits: [],
+  addCertificate: (name) =>
+    set((state) => ({
+      certCredits: [...state.certCredits, createCertificate(name)],
+    })),
+  removeCertificate: (id) =>
+    set((state) => ({
+      certCredits: state.certCredits.filter((c) => c.id !== id),
+    })),
+}));
+```
+
+```tsx
+// CertificateManager.tsx
+import { usePlannerStore } from '../store/plannerStore';
+
+function CertificateManager() {
+  // selector를 사용해 필요한 상태만 가져와서 최적화할 수 있다.
+  const certCredits = usePlannerStore((state) => state.certCredits);
+  const addCertificate = usePlannerStore((state) => state.addCertificate);
+
+  // ...
+}
+```
+
+장점
+
+- UI와 로직을 완벽하게 분리할 수 있다.
+- Props Drilling 없이 어떤 컴포넌트에서든 상태와 로직에 접근할 수 있다.
+- 상태의 위치를 고민할 필요가 줄어들어 빠른 개발이 가능하다.
+- 최신 상태관리 라이브러리들은 필요한 상태만 선택적으로 구독하여 `Context API`에 비해 불필요한 리렌더링을 방지하는 데 훨씬 효과적이다.
+
+단점
+
+- 초기 설정, 번들 크기 등이 증가한다.
+- 전역상태의 남용은 디버깅과 리팩토링을 어렵게 할 수 있다.
+
+## 회고
+
+프로그래밍 패러다임에 대해서 고민해 볼 수 있었다. **특정 프로그래밍 패러다임이 특정 문법에 종속되지 않음을 배울 수 있었다.**
+
+1에서 100에 도달하기 위해서는 위 이슈를 리렌더링 최적화, 메모리, 개발경험, 유지관리, 확장성 등 다양한 측면에서 검토해보는게 중요한 것 같다.
+
+하지만 그것이 전부는 아닌 것 같다. 0에서 1이 되려면 무엇이던 선택해서 시도해보는 것이 중요한 것 같다. 문제를 단순화하여 당장 해결할 수 있는 형태로 만들고 수행해야한다.
+
+나는 처음에 서비스 로직을 담은 클래스를 만들었다. 필요한 자료구조와 입력 타입이 정해지지 않아서 이를 명확히 할 필요가 있었기 때문이다. 테스트가 쉬워서 라고도 생각했지만, 이는 잘못된 판단이였다, 클래스 문법을 쓰지 않더라도 서비스 로직을 순수함수를 만든다면 테스트가 가능하다(오히려 더 좋다). 무슨 로직이 필요한지 무엇을 테스트해야할지 몰라서 잘못된 판단을 했다. 하지만 클래스 문법으로 로직을 먼저 작성하면서 나는 무슨 로직이 필요한지, 무슨 데이터가 정의되어야 하는지, 입출력타입이 어때야하는지, 무슨 기능은 빼고 무슨 기능을 넣을지 구체화할 수 잇었다. 결과적으로 내가 목표한 기간내에 개발을 완료하고 런칭할 수 있었다.
+
+이후 유지 보수와 렌더링 최적화 측면을 고려해서 단일 인스턴스 상태 기반(1번 클래스파)에서 개별 상태 기반(2번 순정파)으로 리팩토링했다. 이 과정에서 코어 로직이 순수함수로 변경되었고, 연산 결과에 메모이제이션을 적용할 수도 있게 되었다.
+
+로직이 복잡하다면 로직을 먼저 구체화하는것이 중요한 것 같다. 돌이켜보면 클래스로 서비스 로직을 먼저 작성하는 것보다 그림판이나 메모장을 키고 자료구조와 입력타입을 먼저 설계했어야 하는지도 모른다.
+
+**좋은 결과라는 것이 분명 존재하지만 그것보단 좋은 방향에 집중하는 것이 더 좋은 방향인 것 같다. 왜냐하면 그것이 좋은 방향이니까.**
+
+(끄덕 짤)
+
+### 참고자료
+
+[레딧 : Working with Classes in React (NOT React Class components)](https://www.reddit.com/r/react/comments/1ja7n19/working_with_classes_in_react_not_react_class/)
+
+[\[React\] 클래스 인스턴스의 효율적인 렌더링과 접근 범위 제어 방법](https://8156217.tistory.com/87)
+
+[react에서-class-사용해보기](https://until.blog/@octoping/react%EC%97%90%EC%84%9C-class-%EC%82%AC%EC%9A%A9%ED%95%B4%EB%B3%B4%EA%B8%B0)

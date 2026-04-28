@@ -1,0 +1,106 @@
+---
+title: '구글 시트 CORS 에러 해결 삽질기'
+description: '프론트엔드 개발자라면 CORS에러는 잊을만하면 마주하기 마련이다. 침착하게…'
+category: '트러블슈팅'
+date: '2025-03-26'
+tags:
+  - 'CORS'
+  - 'Google Sheets'
+thumbnail: './thumbnail.png'
+---
+
+빠르고 간단하게 데이터를 관리할 때 구글 시트는 매우 유용한 도구이다. 간단하게 공유할 수 있을뿐만 아니라 여러 부가기능으로 활용도도 높다. 유튜브에 나온 맛집들을 한눈에 볼 수 있는 간단한 토이프로젝트 [먹튜브](https://matzip.chaesunbak.com/)를 개발하면서 구글 시트를 데이터베이스로 활용하는 과정에서 [CORS 에러](https://developer.mozilla.org/ko/docs/Web/HTTP/CORS/Errors)를 해결한 경험을 공유하고자 한다.
+
+[참고자료 1 : 악명 높은 CORS 개념 & 해결법 - 정리 끝판왕](https://inpa.tistory.com/entry/WEB-%F0%9F%93%9A-CORS-%F0%9F%92%AF-%EC%A0%95%EB%A6%AC-%ED%95%B4%EA%B2%B0-%EB%B0%A9%EB%B2%95-%F0%9F%91%8F)
+
+구글 시트에서 확장 프로그램 - App Script를 선택하여 새로운 `.gs` 파일을 만들고, 다음과 같이 코드를 작성했다. `doGet` 함수를 작성하면 `GET` 메서드 요청을 처리하는 핸들러 역할을 하게된다. 작성 후 배포 버튼을 눌러 웹 앱으로 배포하고, 조회 권한을 모든 사용자에게 부여하기 위해, 실행 컨텍스트는 "`웹 앱을 엑세스하는 사용자`"로, 액세스 권한은 "`모든 사용자`"로 설정했다. 배포 후에는 생성된 웹 앱 URL로 요청을 보내면 응답을 받을 수 있다. 먼저 기본적인 작동 확인을 위해 `"Hello, World!"` 응답을 반환하는 코드를 작성하여 테스트해보았다.
+
+```js
+//get.gs
+
+/**
+ * 웹 앱 요청을 처리하는 함수 (GET 요청)
+ * @param {Object} e - 이벤트 객체 (요청 정보 포함)
+ * @return {ContentService.TextOutput} JSON 형식의 응답
+ */
+function doGet(e) {
+ // 1. URL 파라미터에서 값 추출 (예시: param1)
+  const { param1, ... } = e.parameter;
+
+    // 2. 응답으로 보낼 객체 생성
+  const result = { message : "Hello, World!"}
+
+  // 3. JSON 형식으로 응답
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+기본적인 작동 확인 후, 실제 시트 데이터를 조회하여 응답하도록 코드를 수정했다. `sheetName` 파라미터를 받아 해당 시트의 모든 데이터를 조회하고, 배열 형태로 가공하여 응답하는 `getAllRecords` 함수를 추가했다.
+
+```js
+function getAllRecords(sheetName) {
+  // 1. 활성 스프레드시트에서 sheetName에 해당하는 시트 가져오기
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+
+  // 2. 시트 존재 여부 확인 및 에러 처리
+  if (!sheet) {
+    Logger.log('시트를 찾을 수 없습니다: ' + sheetName);
+    return [];
+  }
+
+  // 3. 시트의 모든 데이터 범위 가져오기
+  const data = sheet.getDataRange().getValues();
+
+  //... (파싱 과정 및 반환 생략)
+}
+
+function doGet(e) {
+  // 1. URL 파라미터에서 값 추출 (예시: param1)
+  const { sheetName } = e.parameter;
+
+  // 2. sheetName 파라미터 유효성 검사
+  if (!sheetName) {
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        error: 'sheetname 파라미터가 필요합니다.',
+      }),
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // 3. sheetName 파라미터가 유효한 경우, getAllRecords 함수를 사용하여 데이터 조회
+  const result = getAllRecords(sheetName);
+
+  // 4. 조회 결과를 JSON 형식으로 응답
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(
+    ContentService.MimeType.JSON,
+  );
+}
+```
+
+하지만 프론트엔드에서 해당 URL로 요청하자 CORS 에러가 발생했다. 당황하지말자. **프론트엔드 개발자라면 CORS 에러는 잊을만하면 마주하기 마련이다. 침착하게…**
+
+## 문제 상황
+
+프론트엔드에서 앱 스크립트 웹 앱 URL로 요청 시 CORS 오류가 발생했다. CORS 에러는 브라우저가 출처가 다른 리소스 접근을 차단하기 때문에 발생한다.
+
+CORS 오류를 해결하는 일반적인 방법은 백엔드에서 CORS 관련 헤더를 설정하거나, 프록시 패턴을 사용하는 것이다. 외부 서비스인 앱스 스크립트의 경우 내가 백엔드에서 CORS 설정을 직접 변경할 수 없다. 이러한 경우 서비스 설정에서 내 도메인(예 : [http://localhost:5173](http://localhost:5173) )을 등록해주어 해결하는 경우가 일반적이다. 하지만 찾아봐도 보이지 않았다.
+
+프록시 패턴을 적용하는 것도 고려했지만 프로젝트를 가볍게 유지하고 싶었기에 부담이 있었다. Vite로 간단하게 SPA으로 구현하는 것이 초기 계획이었기 때문에 Next.js에 마이그레이션하여 해당 API를 중개하는 API를 만들기 꺼렸다. 무엇보다도, 여러번 CORS 에러를 마주하고 해결한 경험이 있는 만큼 이를 회피하고 싶지 않았다.
+
+혹시 앱스 스크립트 코드에서 CORS 설정을 해야 하는 것일까 고민하며 AI에게 물어봤지만 명확한 해결책을 얻지 못했다. **그런데 이전에는 `"Hello, World!"` 응답이 정상적으로 출력되었던 점이 의아했다.**
+
+## 문제 원인
+
+**CORS 오류의 실제 원인은 앱스 스크립트 코드의 문법 오류 및 참조 오류였다.** 작성한 코드에 오류가 있어, 앱스 스크립트는 CORS 설정이 포함되지 않은 기본 오류 안내 페이지(HTML 문서)를 응답으로 반환했다. 브라우저는 이 응답을 CORS 오류로 인식하고 요청을 차단한 것이다. 참고 자료 2의 3번째 답변에서 이와 같은 내용을 확인할 수 있다.
+
+![에러 페이지 화면](./error-html.png)
+
+[참고자료 2 : Stackoverflow How do i allow a CORS requests in my google script?](https://stackoverflow.com/questions/53433938/how-do-i-allow-a-cors-requests-in-my-google-script)
+
+## 해결 방법
+
+앱스 스크립트 코드의 문법 오류와 참조 오류를 수정하여 CORS 오류를 해결했다. 사실 애초에 원인이 CORS와 관련되지 않았던 것이다.
+
+## 후기
+
+**사실 대부분의 에러는 휴먼 에러**라는걸 뼈저리게 느낄 수 있었다. 특히 원인을 알수 없이 오랜 시간 해매는 경우 더욱 그런 것 같다. 그럴수록, 침착하게 기본적인 개념을 바탕으로 차근차근 단계를 밟아 문제 원인을 분석하는 것이 중요함을 느낄 수 있었다.
