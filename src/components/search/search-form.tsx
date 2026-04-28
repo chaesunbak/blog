@@ -2,8 +2,9 @@
 
 import { Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { type FormEvent, useId, useState } from 'react';
+import { type FormEvent, useEffect, useId, useState } from 'react';
 import { Responsive } from '@/shared/components/responsive';
+import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,7 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { cn } from '@/lib/utils';
 
 const SearchField = ({
@@ -28,61 +35,80 @@ const SearchField = ({
   onChange: (value: string) => void;
   onClear: () => void;
 }) => (
-  <div className="relative flex w-full items-center">
-    <Search className="text-muted-foreground absolute left-3 h-4 w-4" />
-    <Input
+  <InputGroup className="h-11 rounded-full border-slate-200 bg-white">
+    <InputGroupInput
       id={inputId}
       type="search"
       placeholder="검색"
       value={query}
       autoFocus={autoFocus}
       onChange={(event) => onChange(event.target.value)}
-      className="h-11 w-full min-w-0 rounded-full border-slate-200 bg-white pr-11 pl-9"
+      className="rounded-full"
       role="searchbox"
     />
+    <InputGroupAddon align="inline-start">
+      <Search className="h-4 w-4" />
+    </InputGroupAddon>
     {query ? (
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        onClick={onClear}
-        className="text-muted-foreground hover:text-foreground absolute right-2 rounded-full"
-      >
-        <X className="h-4 w-4" />
-      </Button>
+      <InputGroupAddon align="inline-end">
+        <InputGroupButton
+          type="button"
+          size="icon-sm"
+          variant="ghost"
+          onClick={onClear}
+          className="text-muted-foreground hover:text-foreground rounded-full"
+          aria-label="검색어 지우기"
+        >
+          <X className="h-4 w-4" />
+        </InputGroupButton>
+      </InputGroupAddon>
     ) : null}
-  </div>
+  </InputGroup>
 );
 
 const DesktopSearch = ({
   className,
-  inputId,
-  query,
-  onChange,
-  onClear,
-  onSubmit,
+  onOpen,
 }: {
   className?: string;
-  inputId: string;
-  query: string;
-  onChange: (value: string) => void;
-  onClear: () => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onOpen: () => void;
 }) => (
-  <form onSubmit={onSubmit} className={cn('max-w-lg', className)}>
-    <label htmlFor={inputId} className="sr-only">
-      포스트 검색
-    </label>
-    <SearchField
-      inputId={inputId}
-      query={query}
-      onChange={onChange}
-      onClear={onClear}
-    />
-  </form>
+  <Button
+    type="button"
+    variant="outline"
+    size="lg"
+    onClick={onOpen}
+    className={cn(
+      'text-muted-foreground h-11 w-full justify-between rounded-full border-slate-200 bg-white px-3 hover:bg-white',
+      className,
+    )}
+    aria-label="검색 열기"
+  >
+    <span className="flex min-w-0 items-center gap-3">
+      <Search className="h-4 w-4 shrink-0" />
+      <span className="truncate">검색</span>
+    </span>
+    <KbdGroup>
+      <Kbd>⌘</Kbd>
+      <Kbd>K</Kbd>
+    </KbdGroup>
+  </Button>
 );
 
-const MobileSearch = ({
+const MobileSearch = ({ onOpen }: { onOpen: () => void }) => (
+  <Button
+    type="button"
+    variant="outline"
+    size="icon-lg"
+    onClick={onOpen}
+    className="text-muted-foreground shrink-0 rounded-full border-slate-200 bg-white"
+    aria-label="검색 열기"
+  >
+    <Search className="h-4 w-4" />
+  </Button>
+);
+
+const SearchDialog = ({
   inputId,
   isDialogOpen,
   query,
@@ -100,23 +126,10 @@ const MobileSearch = ({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) => (
   <Dialog open={isDialogOpen} onOpenChange={onOpenChange}>
-    <Button
-      type="button"
-      variant="outline"
-      size="icon-lg"
-      onClick={() => onOpenChange(true)}
-      className="text-muted-foreground shrink-0 rounded-full border-slate-200 bg-white"
-      aria-label="검색 열기"
-    >
-      <Search className="h-4 w-4" />
-    </Button>
-
     <DialogContent className="gap-5 p-5 sm:p-6">
       <DialogHeader>
-        <DialogTitle>포스트 검색</DialogTitle>
-        <DialogDescription>
-          키워드를 입력해서 블로그 글을 찾아보세요.
-        </DialogDescription>
+        <DialogTitle>게시글 검색</DialogTitle>
+        <DialogDescription>키워드를 입력주세요.</DialogDescription>
       </DialogHeader>
 
       <form onSubmit={onSubmit} className="space-y-3">
@@ -159,9 +172,45 @@ export function SearchForm({
   className?: string;
 }) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const inputId = useId();
   const [query, setQuery] = useState(initialValue);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (isMobile) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (
+        !(event.ctrlKey || event.metaKey) ||
+        event.key.toLowerCase() !== 'k' ||
+        event.isComposing
+      ) {
+        return;
+      }
+
+      const target = event.target;
+
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target instanceof HTMLInputElement ||
+          target instanceof HTMLTextAreaElement ||
+          target instanceof HTMLSelectElement)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      setIsDialogOpen(true);
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobile]);
 
   function navigateToQuery() {
     const normalizedQuery = query.trim();
@@ -188,28 +237,25 @@ export function SearchForm({
   }
 
   return (
-    <Responsive
-      desktop={
-        <DesktopSearch
-          className={className}
-          inputId={inputId}
-          query={query}
-          onChange={setQuery}
-          onClear={handleClear}
-          onSubmit={handleSubmit}
-        />
-      }
-      mobile={
-        <MobileSearch
-          inputId={inputId}
-          isDialogOpen={isDialogOpen}
-          query={query}
-          onChange={setQuery}
-          onClear={handleClear}
-          onOpenChange={setIsDialogOpen}
-          onSubmit={handleSubmit}
-        />
-      }
-    />
+    <>
+      <Responsive
+        desktop={
+          <DesktopSearch
+            className={className}
+            onOpen={() => setIsDialogOpen(true)}
+          />
+        }
+        mobile={<MobileSearch onOpen={() => setIsDialogOpen(true)} />}
+      />
+      <SearchDialog
+        inputId={inputId}
+        isDialogOpen={isDialogOpen}
+        query={query}
+        onChange={setQuery}
+        onClear={handleClear}
+        onOpenChange={setIsDialogOpen}
+        onSubmit={handleSubmit}
+      />
+    </>
   );
 }
