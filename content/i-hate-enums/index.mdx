@@ -1,0 +1,131 @@
+![썸네일 이미지](./thumbnail.png)
+
+평소처럼 코드 리뷰를 하던 중, 한 타입 전용 패키지가 `devDependencies`(개발 의존성)가 아닌 `dependencies`(일반 의존성)에 추가된 것을 발견했다.
+
+> 해당 타입 패키지를 개발 의존성으로 변경하면 좋을 것 같아요!
+
+내 제안은 그럴듯해 보였고, 팀원도 흔쾌히 수용했다. 이때까지만 해도 내가 무슨 일을 저질렀는지 몰랐다.
+
+## 문제상황
+
+코드 수정 후, 평화롭던 빌드 파이프라인에서 에러가 발생했다.
+
+```
+Error: Cannot find module 'types/my-package' or its corresponding type declarations.
+...
+FAILED: build project
+```
+
+당황스러웠다. 분명 타입 패키지인데 왜 빌드 타임에 모듈을 찾을 수 없다고 나오는 걸까? 다시 해당 패키지를 개발 의존성에서 일반 의존성으로 변경하니 빌드에 성공했다.
+
+## 의문점
+
+뭔가 이상해서 프로젝트 레포지터리를 둘러봤고, 재밌는 사실을 발견할 수 있었다. 어떤 패키지에서는 해당 패키지를 개발 의존성으로, 어떤 곳에서는 일반 의존성으로 가져가고 있었다.
+
+```
+//apps/client/package.json
+{
+  "name": "client",
+  "devDependencies": {
+    "@types/package": "2.0.0",
+  },
+}
+//apps/server/package.json
+{
+  "name": "server",
+  "dependencies": {
+    "@types/package": "2.0.0",
+  },
+}
+```
+
+> "어쩔 땐 되고, 어쩔 땐 안 되는 이유가 뭘까?”
+
+```
+import { IamEnum } from '@types/package';
+```
+
+범인은 바로 `enum`이었다. 문제가 된 서버 패키지에서는 타입 패키지에서 `enum`을 가져와 타입이 아니라 값으로 사용하고 있었기 때문이다.
+
+## enum이란?
+
+[`enum`](https://www.typescriptlang.org/ko/docs/handbook/enums.html)은 열거형 변수로, 정해진 범위 안의 값들을 이름으로 관리할 때 사용한다.
+
+```
+export enum Direction {
+  Up = 'UP',
+  Down = 'DOWN'
+}
+```
+
+### 특징
+
+타입스크립트의 대부분 기능(`Interface`, `Type`)은 컴파일 과정에서 사라지지만(타입 소거), `enum`은 다르다. 타입으로도 쓸 수 있지만. 실제로 메모리에 올라가는 객체(값)로도 동작한다.
+
+### 문제의 원인
+
+왜 `devDependencies`가 아닌 `dependencies`여야 했을까?
+
+핵심은 "런타임에 코드가 존재하는가?"이다.
+
+- **타입(Type, Interface):** 컴파일 단계에서 사라짐. 빌드할 때만 정보가 필요하므로 `devDependencies`에 있어도 무방함.
+- **값(Enum, Class):** 컴파일 후에도 자바스크립트 객체로 남아 런타임에 실행됨.
+
+**`enum`을 타입이 아니라 값으로 호출하는 순간, 이 코드는 실행 시점에 해당 패키지의 실제 로직을 참조해야 한다.** 하지만 `devDependencies`는 보통 배포나 런타임 환경에서 제외되기 때문에, 빌드 과정에서 참조할 실제 소스 코드를 찾지 못해 에러가 발생하게 된 것이다.
+
+### enum의 문제점
+
+타입과 값의 경계가 모호하다는 점 뿐만 아니라 enum은 태생적으로 몇가지 이슈가 있다.
+
+#### 트리 쉐이킹 이슈
+
+일반적인 타입스크립트 코드는 사용하지 않으면 빌드 시 삭제되는 트리쉐이킹이 적용되지만, `enum`은 자바스크립트의 즉시 실행 함수(IIFE) 형태로 변환된다. 그런데 **Rollup과 같은 번들러는 IIFE를 '사용하지 않는 코드'라고 판단할 수 없어서 트리 쉐이킹되지 않는다.** 결국 `enum`을 `import`하고 실제로는 사용하지 않더라도 최종 번들에 포함되게 된다.
+
+```
+export var Direction;
+(function (Direction) {
+    Direction["Up"] = "UP";
+    Direction["Down"] = "DOWN";
+})(Direction || (Direction = {}));
+```
+
+[**참고자료 : TypeScript enum을 사용하지 않는 게 좋은 이유를 Tree-shaking 관점에서 소개합니다.**](https://engineering.linecorp.com/ko/blog/typescript-enum-tree-shaking)
+
+#### 유연성 부족
+
+**문자열 열거형(String enums)은 값이 같더라도 호환되지 않는다. 이는 유연성을 크게 떨어뜨린다.**
+
+```
+enum Color {
+  Red = 'RED'
+}
+
+// 값은 똑같은 'RED'이지만, 타입 에러가 발생한다.
+const myColor: Color = 'RED';
+// Error: Type '"RED"' is not assignable to type 'Color'.
+```
+
+## Enum의 대안
+
+이런 의존성 혼란과 런타임 오염 때문에 많은 타입스크립트 개발자들은 `enum` 사용을 피한다. `enum` 대신 `const enum`을, `const enum` 대신 `as const`를 사용할 것이 권장된다.
+
+```
+type Pascalcase<S extends string> = Capitalize<Lowercase<S>>;
+
+type Direction = 'UP' | 'DOWN';
+
+export const DIRECTION = {
+  Up: 'UP',
+  Down: 'DOWN',
+} as const satisfies Record<Pascalcase<Direction>, Direction>
+```
+
+## 회고
+
+Husky 기반의 Pre-push 빌드 자동화 부재로 인해 결함을 조기에 포착하지 못한 점이 아쉽다. 이번 경험으로 자동화 검증 단계의 중요성을 다시 한번 확인했다.
+
+`enum`을 선호하지 않는다라는 사실만 어렴풋이 알고 잇었는데, 이를 체험해 볼 수 있었다. 값과 타입의 혼돈을 피하기 위해 `enum`을 지양하는 것이 좋아보인다.
+
+## 참고자료
+
+[내가 타입스크립트에서 Enum을 잘 쓰지 않는 이유](https://yceffort.kr/2022/03/typescript-use-union-types-instead-enum)
