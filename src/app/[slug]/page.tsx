@@ -1,17 +1,20 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { BlogPostingJsonLd } from "@/components/seo/blog-posting-json-ld";
-import { BreadcrumbJsonLd } from "@/components/seo/breadcrumb-json-ld";
-import { buildMetadata } from "@/lib/metadata";
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { BlogPostingJsonLd } from '@/components/seo/blog-posting-json-ld';
+import { BreadcrumbJsonLd } from '@/components/seo/breadcrumb-json-ld';
+import { buildMetadata } from '@/lib/metadata';
 import {
   encodeSegment,
   formatDisplayDate,
   getAllPostSlugs,
   getPostBySlug,
   getPostTimestamps,
-} from "@/lib/posts";
-import { resolveImageUrl } from "@/lib/site";
-import { Tag } from "@/components/ui/tag";
+} from '@/lib/posts';
+import { resolveImageUrl } from '@/lib/site';
+import { PostComments } from '@/components/posts/post-comments';
+import { Badge } from '@/components/ui/badge';
+import { PostScrollProgress } from '@/components/posts/post-scroll-progress';
+import { Tag } from '@/components/ui/tag';
 
 export async function generateStaticParams() {
   const slugs = await getAllPostSlugs();
@@ -45,7 +48,7 @@ export async function generateMetadata({
       path,
       keywords: post.tags,
       images: image ? [image] : undefined,
-      type: "article",
+      type: 'article',
       publishedTime,
       modifiedTime,
     }),
@@ -73,9 +76,10 @@ export default async function PostPage({
 
   return (
     <main>
+      <PostScrollProgress />
       <BreadcrumbJsonLd
         items={[
-          { name: "홈", path: "/" },
+          { name: '홈', path: '/' },
           { name: post.title, path },
         ]}
       />
@@ -85,9 +89,9 @@ export default async function PostPage({
         publishedTime={publishedTime}
         modifiedTime={modifiedTime}
       />
-      <article className="site-frame flex w-full max-w-5xl flex-col gap-10 py-10 sm:py-12 lg:py-14">
+      <article className="site-frame flex w-full max-w-5xl flex-col gap-4 py-10 sm:py-12 lg:py-14">
         <header className="site-panel flex flex-col gap-4 px-8 py-8 sm:px-10 sm:py-10">
-          <h1 className="text-6xl font-semibold text-gray-800">{post.title}</h1>
+          <h1 className="text-6xl font-semibold text-gray-700">{post.title}</h1>
           <div className="flex flex-wrap gap-3">
             {post.tags.map((tag) => (
               <Tag key={tag} href={`/tags/${encodeSegment(tag)}`}>
@@ -95,28 +99,20 @@ export default async function PostPage({
               </Tag>
             ))}
           </div>
-
-          {post.description ? (
-            <p className="mt-5 max-w-3xl text-xl leading-9 text-slate-500 sm:text-2xl">
-              {post.description}
-            </p>
-          ) : null}
-
-          {displayDate ? (
-            <time
-              dateTime={post.date}
-              className="mt-8 block text-sm font-medium tracking-[0.22em] text-slate-400 uppercase"
-            >
+          {displayDate && (
+            <Badge variant="secondary" className="w-fit">
               {displayDate}
-            </time>
-          ) : null}
+            </Badge>
+          )}
         </header>
 
-        <div className="site-panel px-6 py-6 sm:px-10 sm:py-10">
+        <div className="site-panel px-6 sm:px-10">
           <div className="prose prose-slate prose-headings:tracking-tight prose-img:rounded-3xl prose-img:border prose-img:border-slate-200 max-w-none">
             {post.content}
           </div>
         </div>
+
+        <PostComments />
       </article>
     </main>
   );
