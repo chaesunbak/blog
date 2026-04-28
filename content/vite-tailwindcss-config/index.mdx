@@ -1,0 +1,73 @@
+---
+title: 'Vite에서 Tailwind CSS 설정하기'
+date: '2025-05-03'
+category: '위키'
+tags:
+  - 'Vite'
+  - 'TailwindCSS'
+thumbnail: './thumbnail.png'
+---
+
+## 1\. Tailwind CSS 설치하기
+
+Tailwind CSS 패키지와 Vite 플러그인 패키지를 설치한다.
+
+```
+npm install tailwindcss @tailwindcss/vite
+```
+
+## 2\. Vite 설정에 테일윈드 플러그인 추가하기
+
+```ts
+//vite.config.ts
+import { defineConfig } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
+export default defineConfig({
+  plugins: [tailwindcss()],
+});
+```
+
+## 3\. 테일윈드 CSS 불러오기
+
+전역 스타일 시트에 테일윈드 스타일 스타일을 불러오고, 이를 애플리케이션에 적용한다. 스타일시트의 파일명은 달라도 상관없다. (global.css 등)
+
+```
+//index.css
+
+@import "tailwindcss";
+
+..나머지 CSS
+```
+
+```
+
+//main.tsx
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+
+import "./index.css";
+import App from "./App.tsx";
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+      <App />
+  </StrictMode>
+);
+```
+
+## 4\. 프리티어 테일윈드 플러그인 설정(선택)
+
+[프리티어 테일윈드 플러그인](https://github.com/tailwindlabs/prettier-plugin-tailwindcss)을 설정하면 클래스명이 자동으로 정렬되어, 코드 가독성이 좋아진다.
+
+```
+npm install -D prettier prettier-plugin-tailwindcss
+```
+
+```
+// .prettierrc
+{
+  "plugins": ["prettier-plugin-tailwindcss"]
+}
+```
+
+[참고자료 Get started with Tailwind CSS Using Vite](https://tailwindcss.com/docs/installation/using-vite)

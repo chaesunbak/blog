@@ -1,4 +1,13 @@
-![썸네일 이미지](./thumbnail.png)
+---
+title: '타입스크립트 개발자들이 enum을 싫어하는 이유'
+description: '싫어하는 이유 A4 한 페이지 채워오세요'
+category: '위키'
+date: '2026-01-26'
+tags:
+  - 'TypeScript'
+  - 'Enum'
+thumbnail: './thumbnail.png'
+---
 
 평소처럼 코드 리뷰를 하던 중, 한 타입 전용 패키지가 `devDependencies`(개발 의존성)가 아닌 `dependencies`(일반 의존성)에 추가된 것을 발견했다.
 
@@ -10,7 +19,7 @@
 
 코드 수정 후, 평화롭던 빌드 파이프라인에서 에러가 발생했다.
 
-```
+```plaintext
 Error: Cannot find module 'types/my-package' or its corresponding type declarations.
 ...
 FAILED: build project
@@ -22,7 +31,7 @@ FAILED: build project
 
 뭔가 이상해서 프로젝트 레포지터리를 둘러봤고, 재밌는 사실을 발견할 수 있었다. 어떤 패키지에서는 해당 패키지를 개발 의존성으로, 어떤 곳에서는 일반 의존성으로 가져가고 있었다.
 
-```
+```json
 //apps/client/package.json
 {
   "name": "client",
@@ -41,7 +50,7 @@ FAILED: build project
 
 > "어쩔 땐 되고, 어쩔 땐 안 되는 이유가 뭘까?”
 
-```
+```ts
 import { IamEnum } from '@types/package';
 ```
 
@@ -51,10 +60,10 @@ import { IamEnum } from '@types/package';
 
 [`enum`](https://www.typescriptlang.org/ko/docs/handbook/enums.html)은 열거형 변수로, 정해진 범위 안의 값들을 이름으로 관리할 때 사용한다.
 
-```
+```ts
 export enum Direction {
   Up = 'UP',
-  Down = 'DOWN'
+  Down = 'DOWN',
 }
 ```
 
@@ -81,11 +90,11 @@ export enum Direction {
 
 일반적인 타입스크립트 코드는 사용하지 않으면 빌드 시 삭제되는 트리쉐이킹이 적용되지만, `enum`은 자바스크립트의 즉시 실행 함수(IIFE) 형태로 변환된다. 그런데 **Rollup과 같은 번들러는 IIFE를 '사용하지 않는 코드'라고 판단할 수 없어서 트리 쉐이킹되지 않는다.** 결국 `enum`을 `import`하고 실제로는 사용하지 않더라도 최종 번들에 포함되게 된다.
 
-```
+```js
 export var Direction;
 (function (Direction) {
-    Direction["Up"] = "UP";
-    Direction["Down"] = "DOWN";
+  Direction['Up'] = 'UP';
+  Direction['Down'] = 'DOWN';
 })(Direction || (Direction = {}));
 ```
 
@@ -95,9 +104,9 @@ export var Direction;
 
 **문자열 열거형(String enums)은 값이 같더라도 호환되지 않는다. 이는 유연성을 크게 떨어뜨린다.**
 
-```
+```ts
 enum Color {
-  Red = 'RED'
+  Red = 'RED',
 }
 
 // 값은 똑같은 'RED'이지만, 타입 에러가 발생한다.
@@ -109,7 +118,7 @@ const myColor: Color = 'RED';
 
 이런 의존성 혼란과 런타임 오염 때문에 많은 타입스크립트 개발자들은 `enum` 사용을 피한다. `enum` 대신 `const enum`을, `const enum` 대신 `as const`를 사용할 것이 권장된다.
 
-```
+```ts
 type Pascalcase<S extends string> = Capitalize<Lowercase<S>>;
 
 type Direction = 'UP' | 'DOWN';
@@ -117,7 +126,7 @@ type Direction = 'UP' | 'DOWN';
 export const DIRECTION = {
   Up: 'UP',
   Down: 'DOWN',
-} as const satisfies Record<Pascalcase<Direction>, Direction>
+} as const satisfies Record<Pascalcase<Direction>, Direction>;
 ```
 
 ## 회고

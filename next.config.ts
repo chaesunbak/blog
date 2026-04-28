@@ -1,17 +1,22 @@
 import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
-
 const nextConfig: NextConfig = {
-  /* config options here */
+  async rewrites() {
+    return [
+      {
+        source: "/feed",
+        destination: "/rss.xml",
+      },
+      {
+        source: "/rss",
+        destination: "/rss.xml",
+      },
+    ];
+  },
 };
 
 const withMDX = createMDX({
-  options: {
-    remarkPlugins: [
-      ["remark-mdx-images"]
-    ],
-  },
-  extension: /\.(md|mdx)$/,
+  // remark and rehype plugins are configured in src/lib/posts.ts via compileMDX
 });
 
 export default withMDX(nextConfig);

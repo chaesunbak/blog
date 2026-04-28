@@ -1,0 +1,72 @@
+---
+title: '네트워크 관리사 2급 실기 에뮬레이터 Wineskin으로 Mac에서 돌리기'
+description: '나만 윈도우 없어 그래서 준비했습니다'
+date: '2025-07-19'
+category: '위키'
+tags:
+  - 'Wineskin'
+---
+
+[네트워크관리사](https://www.icqa.or.kr/cn/page/network) 2급 실기 시험은 검정용 프로그램을 사용한 작업형 시험이다. [한국정보통신자격협회 자료실](https://www.icqa.or.kr/cn/board/dataroom?sca=%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC%EA%B4%80%EB%A6%AC%EC%82%AC)에서 실습용 프로그램을 내려받을 수 있다. 그런데 실습용 프로그램은 Windows가 필요하다. 그런데 집에 있던 유일한 Window 노트북이 수명을 다해버렸다. 그래서 Wineskin으로 MacOS에서 네트워크관리사 2급 실습용 프로그램을 실행해보고 방법을 정리했다.
+
+## Wineskin이란?
+
+Windows 소프트웨어를 MacOS에서 실행할 수 있게 해주는 포팅/래퍼 프로그램.
+
+오리지널 프로그램 [Wineskin](https://sourceforge.net/projects/wineskin/)은 2015년 이후 개발이 중단되었으며, 지금은 Gcenx에 의해 [Kegworks](https://github.com/Kegworks-App/Kegworks)라는 이름의 프로젝트로 이어지고 있다.
+
+Wineskin에 대한 부가적인 정보를 덧붙이자면, Wineskin은 Wine이라는 CLI 프로그램을 더 사용하기 쉽게 GUI를 추가한 프로그램이다. Wine은 가상의 컴퓨터(또는 운영체제)를 만들고 그 위에서 프로그램을 돌리는 에뮬레이터 방식이 아니라 윈도우 프로그램이 내리는 명령어를 MacOS가 이해할 수 있는 명령어로 번역해주는 방식이다. Wine이라는 이름도 Wine Is Not an Emulator이라는 재귀약자(약자 자체가 자신의 정의의 일부를 포함하고 있는 형태)이다.
+
+## Wineskine(Kegworks) 설치하기
+
+[brew](https://brew.sh/)를 사용해 설치한다.
+
+```
+brew upgrade
+brew install --cask --no-quarantine Kegworks-App/kegworks/kegworks
+```
+
+## 에뮬레이터 파일 다운로드하기
+
+한국정보통신협회 자료실에서 세가지 실습 프로그램을 제공한다
+
+1.  Router Emulator : 라우터 설정 문제
+2.  ICQA 모의고사 예제 프로그램 : 단답형 문제
+3.  네트워크관리사 실습용 에뮬레이터 : Windows Server 설정 문제
+
+64비트 버전을 다운받는다.
+
+## 와인스킨 초기 설정
+
+엔진과 래퍼 버전 다운로드해준다. 모두 최신버전을 선택해도 문제 없다.
+
+## 라우터 에뮬레이터 래퍼 만들기
+
+1.  Kegworks Winery 실행 → 엔진 선택 → Create New Blank Wrapper → 래퍼 이름 정하기(예 : router.app) → OK (로딩이 좀 걸려도 기다린다. 멈춘거 아님)
+2.  완료되면 [router.app](http://router.app) 래퍼를 실행시켜준다. 래퍼 위치는 `users/응용 프로그램/Kegworks/` 런치패드에서도 선택가능. (없다면 재부팅)
+3.  winetricks에서 한글 폰트를 다운로드한다. fonts → cjksfonts → run (로딩이 좀 걸려도 기다린다.)
+4.  앱을 선택해준다. Browse → .exe 파일 선택
+5.  install Software → .exe 파일 선택
+
+서버 보안 점검으로 밤11시30분~2시30분정도까지 이 시간대에는 접근이 제한될 수 있으며
+
+'정상적인 접근이 아닙니다.' 라고 메시지가 나옵니다.
+
+## 네트워크 관리사 실습용 에뮬레이터 래퍼 만들기
+
+네트워크 관리사 실습용 에뮬레이터 파일은 exe 확장자가 아니라 msi 확장자여서 단계가 추가된다. 바로 실행하는 것이 아니라 설치 후 실행해야 한다.
+
+1.  Kegworks Winery 실행 → 엔진 선택 → Create New Blank Wrapper → 래퍼 이름 정하기(예: emulator.app) → OK (로딩이 좀 걸려도 기다린다. 멈춘거 아님)
+2.  완료되면 [emulator.app](http://emulator.app) 래퍼를 실행시켜준다. 래퍼 위치는 `users/응용 프로그램/Kegworks/` 런치패드에서도 선택가능.(없다면 재부팅)
+3.  winetricks에서 MS .NET(3.5이상)과 한글 폰트를 다운로드한다. dlls dotnet35(또는 dotnet9) ,fonts → cjksfonts → run (로딩이 좀 걸려도 기다린다.)
+4.  Install Software → Choose Setup Executable → .msi 파일 선택 (로딩이 좀 걸려도 기다린다.)
+5.  icqaControl 설치 마법사로 실행(경로 변경 x)
+6.  Browse → `C:\Program Files\ICQA\icqaControl\icqaControlUpdate.exe` 선택
+
+## 정리
+
+윈도우가 설치된 컴퓨터가 있다면, 윈도우를 사용하자. 가상머신을 사용하는 것도 방법이다.
+
+Wineskin UI는 개발자 감성으로 친절하지 못하다. 직관적이지 못한 이름들도 한목한다.
+
+래퍼 용량이 꽤 크므로 사용한 후에는 삭제해주자.
