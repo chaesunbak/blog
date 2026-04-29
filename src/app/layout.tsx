@@ -1,20 +1,22 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
-import { PersonJsonLd } from "@/components/seo/person-json-ld";
-import { WebSiteJsonLd } from "@/components/seo/website-json-ld";
-import { siteConfig } from "@/lib/site";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import { GoogleAnalytics } from '@next/third-parties/google';
+
+import { SiteFooter } from '@/components/layout/site-footer';
+import { SiteHeader } from '@/components/layout/site-header';
+import { PersonJsonLd } from '@/components/seo/person-json-ld';
+import { WebSiteJsonLd } from '@/components/seo/website-json-ld';
+import { siteConfig } from '@/lib/site';
+import './globals.css';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
@@ -23,7 +25,7 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   applicationName: siteConfig.name,
   alternates: {
-    canonical: "/",
+    canonical: '/',
   },
   authors: [
     {
@@ -34,7 +36,7 @@ export const metadata: Metadata = {
   creator: siteConfig.author.name,
   publisher: siteConfig.author.name,
   openGraph: {
-    type: "website",
+    type: 'website',
     locale: siteConfig.locale,
     url: siteConfig.url,
     siteName: siteConfig.name,
@@ -42,7 +44,7 @@ export const metadata: Metadata = {
     description: siteConfig.description,
   },
   twitter: {
-    card: "summary",
+    card: 'summary',
     title: siteConfig.name,
     description: siteConfig.description,
   },
@@ -73,6 +75,9 @@ export default function RootLayout({
         <div className="flex-1">{children}</div>
         <SiteFooter />
       </body>
+      {process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID && (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID} />
+      )}
     </html>
   );
 }
