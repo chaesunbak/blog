@@ -15,14 +15,14 @@ tags:
 
 해당 방식으로 개발하며 이러한 방식의 장단점을 느껴볼 수 있었고, 개발완료 이후에는 해당 이슈에 관한 다른 의견이 궁금해서 리서치를 해 보았다. 그 결과 레딧에서 열띤 [토론](https://www.reddit.com/r/react/comments/1ja7n19/working_with_classes_in_react_not_react_class/)을 찾을 수 있었다. 나의 개발 경험, 레딧 토론, 그외 참고자료들을 정리해보면서, 상태 관리와 프로그래밍 패러다임, 관심사 분리에 대한 좋은 인사이트를 얻을 수 있을 것 같아, 이 이슈에 관한 여러 입장들을 정리해보려 한다.
 
-## 1\. 클래스파
+## 1. 클래스파
 
 내가 시도했던 방법. 핵심 로직을 담은 클래스를 만들고, 그 인스턴스를 상태로 관리하는 방법이다.
 
 ```tsx
 //src/components/App.tsx
 export function App() {
-  const [planner, setPlanner] = useState<CreditBankPlanner | null>(null);
+  const [planner, setPlanner] = useState<CreditBankPlanner | null>(null); // 인스턴스로 상태로 저장
 
   // ...
 }
@@ -30,6 +30,7 @@ export function App() {
 
 ```ts
 //src/service/CreditBankPlanner.ts
+// 클래스 선언
 export class CreditBankPlanner {
   public degreeProgram: DegreeProgram;
   public major: Major;
@@ -52,9 +53,7 @@ export class CreditBankPlanner {
     // ...
   }
 
-  private setupManagers() {
-    // CertificateManager, SelfEducationManager 등을 초기화
-  }
+  ...
 }
 ```
 
@@ -88,38 +87,6 @@ function clonePlanner(planner) {
 ```
 
 또한, 모든 상태가 하나의 거대한 객체로 관리된다는 점도 문제다. 작은 변화에도 전체 `planner` 인스턴스가 교체되므로, `planner`를 props로 받는 모든 자식 컴포넌트가 불필요하게 리렌더링된다.
-
-```tsx
-//src/components/App.tsx
-export function App() {
-  const [planner, setPlanner] = useState<CreditBankPlanner | null>(null);
-
-  //1. triggerPlannerRerender() 호출 시 새 인스턴스로 교체해요.
-  const addCertificateCredit = (name) => {
-    planner?.addCredit('certificate', { name });
-    setPlanner(clonePlanner(planner));
-  };
-
-  // ...
-  // 2. 실제 값은 같더라도 주소 값이 다르므로
-  // planner를 사용하는 모든 자식 컴포넌트가 리렌더링되요.
-  return (
-    <main>
-      <CertificateManager
-        certCredits={planner.certificateManager.credits}
-        errors={planner.certificateManager.errors}
-        onAdd={addCertificateCredit}
-      />
-      <SelfEducationManager
-        selfCredits={planner.selfeducationManager.credits}
-        errors={planner.selfeducationManager.errors}
-        onRemove={removeSelfCredit}
-      />
-      {/* ... */}
-    </main>
-  );
-}
-```
 
 장점
 
@@ -169,7 +136,7 @@ const CertificateManager = observer(() => {
 });
 ```
 
-## 2\. 순정파
+## 2. 순정파
 
 `class`는 자바스크립트의 문법적 설탕(Syntactic Sugar)일 뿐이라고 주장하는 관점. 컴포넌트와 타입만으로 `class` 문법 없이도 객체지향프로그래밍이 가능하다고 본다.
 
@@ -194,17 +161,8 @@ export function App() {
   );
   const [selectedMajor, setSelectedMajor] = useState<Major | null>(null);
   const [certCredits, setCertCredits] = useState<CertificateCredit[]>([]);
-  const [selfCredits, setSelfCredits] = useState<SelfEducationCredit[]>([]);
-
   const totals = computeTotals(certCredits, selfCredits, lecCredits);
   const required = getRequiredCredits(selectedProgram);
-  const certErrors = validateCertificates(
-    selectedProgram,
-    selectedMajor,
-    certCredits,
-  );
-  const selfErrors = validateSelfEducation(selfCredits);
-
   // ...
 
   return (
@@ -214,11 +172,7 @@ export function App() {
         errors={certErrors}
         onAdd={addCertificateCredit}
       />
-      <SelfEducationManager
-        selectedSelfEducation={selfCredits}
-        errors={selfErrors}
-        onRemove={removeSelfCredit}
-      />
+
       {/* ... */}
     </main>
   );
@@ -282,7 +236,7 @@ const removeCertificateCredit = (id) => {
 };
 ```
 
-## 3\. 상태관리 라이브러리파
+## 3. 상태관리 라이브러리파
 
 `Zustand`, `Redux`같은 상태관리 라이브러리로 로직을 분리하는 방식. 클래스파와 마찬가지로 UI와 로직을 분리한다는 목표는 같지만, 그 도구로 클래스 인스턴스가 아닌 '스토어(Store)'를 사용한다.
 

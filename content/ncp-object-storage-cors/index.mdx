@@ -1,6 +1,6 @@
 ---
 title: 'NCP Object Storage CORS 에러 해결법'
-description: '잊을만하면 니가 왜 거기서 나와'
+description: '잊을만하면 나오더라'
 category: '트러블슈팅'
 date: '2026-03-17'
 tags:
@@ -25,13 +25,11 @@ async function getLog(url){
 CORS ERROR
 ```
 
-그런데 짜잔, CORS 에러가 발생했다. CORS 에러는 잊을만 하면 등장한다
+그런데 짜잔, CORS 에러가 발생했다. CORS 에러는 잊을만 하면 등장한다. (나야 CORS)
 
-(나야 CORS)
+이쯤 되면 절대 당황하지 않고 침착하게 해결할 수 있다. **CORS 에러는 브라우저의 오리진과 리소스 오리진이 달라서 발생하는 이슈이므로, 리소스 서버의 응답에 CORS 관련 헤더를 추가해주면 된다.**
 
-이쯤 되면 절대 당황하지 않고 침착하다. **CORS 에러는 브라우저의 오리진과 리소스 오리진이 달라서 발생하는 이슈이므로, 리소스 서버의 응답에 CORS 관련 헤더를 추가해주면 된다.**
-
-그런데 뭔가 이상하다. 외부 API를 쓰는 것도 아니고 스토리지 서비스를 쓸때 CORS에러가 발생하기도 하던가? 스토리지 서비스를 쓰다가 CORS 에러를 마주했다는 사례를 본적이 없다. 다들 이미지나 비디오를 스토리지 서비스에 저장하고 그냥 잘 불러오지 않나?
+그런데 뭔가 이상하다. 외부 API를 쓰는 것도 아니고 스토리지 서비스를 쓸때 CORS에러가 발생하기도 하던가? 스토리지 서비스를 쓰다가 CORS 에러를 마주했다는 사례를 본적이 없는 것 같은데. 다들 이미지나 비디오를 스토리지 서비스에 저장하고 그냥 잘 불러오지 않나?
 
 ## 리소스를 어떻게 사용하냐에 따라 다르다
 
@@ -47,11 +45,11 @@ CORS ERROR
 
 ### 1. 프록시 패턴 도입하기
 
-브라우저가 스토리지를 직접 호출하는 대신, 우리가 제어할 수 있는 백엔드 서버를 거쳐서 데이터를 가져오는 방식이다. 우리가 제어하는 백엔드 서버는 `same-origin`이거나 CORS 관련 헤더를 우리가 직접 추가할 수 있으므로 CORS 에러 해결이 가능하다. 다만, API 서버 부하가 걸리므로 이 방법은 특별한 보안 요구사항이 있지 않은 경우에는 불필요한 방법이다.
+브라우저가 스토리지를 직접 호출하는 대신, 우리가 제어할 수 있는 백엔드 서버를 거쳐서 데이터를 가져오는 방식이다. 우리가 제어하는 백엔드 서버는 `same-origin`이거나 CORS 관련 헤더를 우리가 직접 추가할 수 있으므로 CORS 에러 해결이 가능하다. 다만, API 서버 부하가 걸리므로 비용 절감을 위해 외부 스토리지 서비스를 사용하는 의미가 퇴색된다. 이 방법은 특별한 보안 요구사항이 있지 않은 경우에는 불필요하다고 판단했다.
 
 ### 2. 스토리지 서비스에 CORS 설정 추가하기
 
-가장 정석적인 방법이다. 스토리지 서비스 설정에 CORS 설정을 변경하면 CORS 관련 헤더가 추가된다. 우리 프로젝트에서는 해당 방법을 선택했다.
+가장 정석적인 방법이다. 스토리지 서비스 설정에서 CORS 설정을 변경하는 것이다. 우리 프로젝트에서는 해당 방법을 선택했다.
 
 ## NCP CORS 설정 방법
 
@@ -104,5 +102,7 @@ NCP의 Object Storage는 AWS S3와 호환되는 API 구조를 가지고 있다. 
 
 `aws-sdk` 사용방법은 다음 예시들을 참고할 수 있다.
 
-참고자료 1 : [S3::PutBucketCorsCommand](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/s3/command/PutBucketCorsCommand/)  
-참고자료 2 : [AWS SDK 또는 CLI와 PutBucketCors 함께 사용](https://docs.aws.amazon.com/ko_kr/code-library/latest/ug/s3_example_s3_PutBucketCors_section.html)
+## 참고자료
+
+[S3::PutBucketCorsCommand](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/s3/command/PutBucketCorsCommand/)  
+[AWS SDK 또는 CLI와 PutBucketCors 함께 사용](https://docs.aws.amazon.com/ko_kr/code-library/latest/ug/s3_example_s3_PutBucketCors_section.html)

@@ -31,7 +31,7 @@ date: '2026-04-09'
 >
 > [mdn : Clipboard API](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API)
 
-Safari에서 Clipboard API를 사용하려면 클릭 이벤트 등 일시적 사용자 활성화가 필요하다. **클릭 사용자 이벤트와 Clipboard API 호출 사이에 다른 작업이 끼어들면서 NotAllowedError가 발생한 것이다.**
+Safari에서 Clipboard API를 사용하려면 클릭 이벤트 등 '일시적 사용자 활성화'가 필요하다. **클릭 사용자 이벤트와 Clipboard API 호출 사이에 다른 작업이 끼어들면서 NotAllowedError가 발생한 것이다.**
 
 ### 해결방법
 
@@ -48,7 +48,7 @@ Safari에서 Clipboard API를 사용하려면 클릭 이벤트 등 일시적 사
 }
 ```
 
-예외 처리를 보다 친절하게 해보자.
+이렇게 예외가 발생할 수 있는 상황에서는, 예외 처리를 꼭 해주어야 한다.
 
 ```js
 async function handleShare(text) {

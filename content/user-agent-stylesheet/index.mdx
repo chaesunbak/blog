@@ -11,9 +11,9 @@ tags:
 
 웹 개발을하다 보면 Chrome, Firefox, Safari, Edge 등 브라우저마다 화면이 다르게 보이는 경험을 하게된다.이를 **크로스 브라우징 이슈**라고 하며, 이는 웹 개발자가 일관된 사용자 경험을 제공하는 데 큰 장애물이 된다.
 
-## 사용자 에이전트 스타일시트 (User Agent Stylesheet)
+## 사용자 에이전트 스타일시트
 
-이 문제의 원인은 각 웹 브라우저가 가진 고유한 기본 스타일, 즉 **사용자 에이전트 스타일시트** 때문이다. 예를 들어, `<p>` 태그는 브라우저마다 다른 기본 상하 여백(margin)을 가질 수 있고, `<h1>` 태그의 글자 크기나 굵기, 버튼(`<button>`)의 기본 모양 등도 제 각각이다.
+이 문제의 원인은 각 웹 브라우저가 가진 고유한 기본 스타일, 즉 **사용자 에이전트 스타일시트**(User Agent Stylesheet) 때문이다. 예를 들어, `<p>` 태그는 브라우저마다 다른 기본 상하 여백(margin)을 가질 수 있고, `<h1>` 태그의 글자 크기나 굵기, 버튼(`<button>`)의 기본 모양 등도 제 각각이다.
 
 브라우저의 개발자 도구(F12 또는 마우스 우클릭 > 검사)를 열어 특정 요소에 적용된 스타일의 출처를 확인 할 수 있다. `*사용자 에이전트 스타일시트`\*
 
@@ -69,7 +69,7 @@ Reset CSS와 달리, 유용한 기본 스타일은 유지하면서 브라우저 
 @import "tailwindcss";
 ```
 
-tailwindcss를 프로젝트에 설치하고 CSS 파일에 `@import "tailwindcss";` 를 추가하면 자동으로 Preflight가 자동으로 `base` [레이어](https://developer.mozilla.org/ko/docs/Web/CSS/@layer)에 주입된다. Preflight는 tailwindcss는 자체적으로 제공하는 기본 스타일 세트다. (Preflight는 **`modern-normalize`**를 기반으로 구축되었다.)
+tailwindcss를 프로젝트에 설치하고 CSS 파일에 `@import "tailwindcss";` 를 추가하면 자동으로 Preflight가 자동으로 `base` [레이어](https://developer.mozilla.org/ko/docs/Web/CSS/@layer)에 주입된다. Preflight는 tailwindcss는 자체적으로 제공하는 기본 스타일 세트다. (Preflight는 `modern-normalize`를 기반으로 구축되었다.)
 
 ## 정리
 

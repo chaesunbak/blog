@@ -14,57 +14,7 @@ tags:
 
 웹 요청을 연달아 보내는 경우, 이전 요청들이 아직 처리 중인 상태에서 새로운 요청들이 계속 쌓이면서 병목 현상, 즉, 흐름이 막히는 현상이 발생할 수 있다. 경우에 따라, 사용자는 마지막 요청이 완료될 때까지 로딩을 기다려야 할수도 있다. 이는 매우 부정적인 사용자 경험으로 이어진다. 최악으로는, 사용자는 응답이 없다고 오해하여 페이지를 이탈할 수 있다.
 
-## 해결 방법
-
-### 1\. HTTP/2 프로토콜을 사용하기
-
-#### HTTP/2 프로토콜이란?
-
-크롬 브라우저는 `HTTP/1.1` 프로토콜로 동일한 [출처](https://developer.mozilla.org/ko/docs/Glossary/Origin)에 대해 동시에 6개의 `TCP` 연결만을 허용한다. `HTTP/2` 는 브라우저에서 동시 요청에 제한이 없으므로 병목현상이 줄어든다. 이는 더 빠른 웹 통신을 위해 2015년에 도입되었으며 [HTTP/2 나 gQUIC 같은 효율적인 프로토콜의 도입은 늘어나고 있다](https://almanac.httparchive.org/en/2020/http).
-
-#### HTTP/2 프로토콜을 사용중인지 확인하는 방법
-
-내 웹 사이트가 어떤 프로토콜을 사용하고 있는지 확인하려면 개발자도구 네트워크 탭을 확인할 수 있다. 프로토콜 `h2`로 표시된다면 `HTTP/2`를 사용하고 있음을 말한다.
-
-#### HTTP/2 프로토콜을 사용하는 방법
-
-`HTTP/2`같은 효율적인 프로토콜을 사용하기 위해서는 웹 브라우저와 웹서버가 모두 이를 지원해야합니다. 거의 모든 브라우저들은 이를 기본적으로 지원하므로 따로 설정할 필요가 없다. 대부분의 최신 웹 서버는 이를 지원하며, 따로 설정이 필요할 수 있다.
-
-`HTTP/2` 프로토콜은 `HTTPS` 위에서 동작하도록 설계되었다. 따라서, `HTTP/2` 프로토콜을 사용하러면 우선 `HTTPS` 프로토콜을 사용해야 한다.
-
-장점
-
-• **병렬 처리** : 여러 요청을 동시에 처리하여 응답 시간을 단축한다.
-
-• **스트림 우선 순위** : 요청의 우선 순위를 지정하여 중요한 리소스가 먼저 로드되도록 제어할 수 있다.
-
-• **서버 푸시** : 서버가 클라이언트 요청 없이도 리소스를 미리 전송하여 페이지 로드 속도를 높일 수 있다.
-
-한계점
-
-• **API 및 서버 지원** : API 및 서버가 HTTP/2 프로토콜을 지원해야 한다. 즉, 외부 API를 사용중이고 외부 API가 이를 지원하지 않는다면 적용할 수 없다.
-
-추천 영상
-
-[\[10분 테코톡\] 🧃쿨라임의 HTTP/1.1, HTTP/2, 그리고 QUIC](https://www.youtube.com/watch?v=xcrjamphIp4)
-
-### 2\. 요청 수 줄이기
-
-**지연로딩**을 통해 당장 필요하지 않은 리소스는 나중에 로드할 수 있다. 사용자가 스크롤을 내려 해당 영역에 도달했을 때 이미지를 로드하는 **이미지 지연로딩**은 대표적인 웹 최적화 방법이다.
-
-**캐싱**을 활용하여 반복적인 요청을 줄이고, 이미 가져온 데이터를 재사용할 수 있다.
-
-**데이터 병합**을 통해 여러 개의 작은 요청을 하나의 큰 요청으로 병합할 수 있다.
-
-⚠️
-
-#### 데이터 병합 시 주의점
-
-1번 방법(HTTP/2 프로토콜)을 사용한다면 이러한 수고를 덜 수 있다. 데이터 병합 이전 1번 방법을 먼저 시도하는 것을 권장한다.
-
-또한, API 병합은 애플리케이션의 유연성이 감소할 수 있으니. 이에 주의해야한다.
-
-### 3\. 이전 요청을 취소하기.
+## 해결 방법 : 이전 요청을 취소하기
 
 연달아 요청하는 경우, 더이상 이전 요청에 대한 응답이 필요하지 않다면 이전 요청을 취소하여 성능을 개선할 수 있다. [`AbortController`](https://developer.mozilla.org/ko/docs/Web/API/AbortController)로 웹 요청을 취소 할 수 있다. `AbortController`가 처음이라면 [가이드](https://velog.io/@sehyunny/abort-controller-is-your-friend)와 [라이브 데모](https://mdn.github.io/dom-examples/abort-api/)를 확인해보는 것을 권장한다.
 
@@ -112,44 +62,46 @@ function ProductDetails({ productId }) {
 
 ## 프로젝트에 적용하기
 
-전월세 실거래가 공공데이터를 활용한 지도 서비스([대방](https://dae-bang.vercel.app/onetwo?lat=37.49436732800421&lng=127.01446798508894&region=11650))를 만들면서, 여러 요청이 쌓이면서 로딩 시간이 매우 길어지는 치명적인 이슈를 마주했다. 지도를 움직여 지역이 바뀔 때마다, 그 지역의 데이터를 요청하는데, 데이터 패칭에 1000m ~ 2000ms 정도 소요되었다.(모든 요청이 외부 API를 사용하는 것이었기 때문에 이 소요시간을 개선할 수는 없었다.) 이때, 기존 데이터 패칭이 완료되기 전에 새로운 지역으로 움직이면 추가적으로 새 데이터 패칭을 기다려야 했다. **데이터 패칭에 디바운싱을 적용해도 디바운싱 시간(200ms)보다 데이터 패칭에 소요되는 시간이 길기 때문에, 요청이 쌓이는 것이 가능했다.** 이것이 반복되면, 요청이 계속 쌓여서 로딩이 매우 길어지는 치명적인 이슈가 발생했다. 디바운싱을 시간을 늘리면 늘릴 수록 사용자 경험이 저해되기 때문에 결국 이를 해결하기 위해 디바운싱과 함께 **새 요청이 있기 전에 기존 요청을 취소할 필요를 느꼈다.** `React-Query`를 사용중이였기 때문에 이에 맞게 코드를 작성해주었다.
+전월세 실거래가 공공데이터를 활용한 지도 서비스([대방](https://dae-bang.vercel.app/onetwo?lat=37.49436732800421&lng=127.01446798508894&region=11650))를 만들면서, 여러 요청이 쌓이면서 로딩 시간이 매우 길어지는 치명적인 이슈를 마주했다.
+
+지도를 움직여 지역이 바뀔 때마다, 그 지역의 데이터를 요청하는데, 데이터 패칭에 1000m ~ 2000ms 정도 소요되었다.(모든 요청이 외부 API를 사용하는 것이었기 때문에 이 소요시간을 개선할 수는 없었다.) 이때, 기존 데이터 패칭이 완료되기 전에 새로운 지역으로 움직이면 추가적으로 새 데이터 패칭을 기다려야 했다.
+
+**데이터 패칭에 디바운싱을 적용해도 디바운싱 시간(200ms)보다 데이터 패칭에 소요되는 시간이 길기 때문에, 요청이 쌓이는 것이 가능했다.** 이것이 반복되면, 요청이 계속 쌓여서 로딩이 매우 길어지는 치명적인 이슈가 발생했다. 디바운싱을 시간을 늘리면 늘릴 수록 사용자 경험이 저해되기 때문에 결국 이를 해결하기 위해 디바운싱과 함께 **새 요청이 있기 전에 기존 요청을 취소할 필요를 느꼈다.**
+
+`React-Query`를 사용중이였기 때문에 이에 맞게 코드를 작성해주었다.
 
 ```ts
 // useSise.ts
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-...
 
 const useSise = () => {
+  const queryClient = useQueryClient(); // 쿼리 클라이언트 가져오기
+  // ... 쿼리 키 가져오는 부분 (리덕스나 서치파람 등에서 쿼리 키를 가져옵니다)
 
-    const queryClient = useQueryClient(); // 쿼리 클라이언트 가져오기
-
-    ... // 쿼리 키 가져오는 부분 (리덕스나 서치파람 등에서 쿼리 키를 가져옵니다)
-
-    // 새 요청이 발생할 때 이전 요청 취소
-    // useEffect의 클린업 함수 부분은 의존성 배열이 변경되기 이전에 실행되어, 변경 이전의 값을 참고합니다.
-    // exact: true 옵션을 사용하지 않으면(기본 설정), queryKey 배열과 부분적으로 일치하는 모든 쿼리가 취소됩니다.
-    // exact: true 옵션을 사용한다면 정확히 이전 쿼리만 취소합니다.
-    useEffect(() => {
-        return () => {
-            queryClient.cancelQueries({
-                queryKey: [category, regionCode, slectedYYYYMMM, activeFilters],
-                exact: true
-            });
-        };
-    }, [category, regionCode, queryClient, slectedYYYYMMM, activeFilters]);
-
-        // useQuery는 쿼리 키 변경시마다 실행되어 해당 키에 해당 하는 데이터를 가져오고 캐시합니다.
-    const { data, isPending, isError, error } = useQuery({
+  // 새 요청이 발생할 때 이전 요청 취소
+  // useEffect의 클린업 함수 부분은 의존성 배열이 변경되기 이전에 실행되어, 변경 이전의 값을 참고합니다.
+  // exact: true 옵션을 사용하지 않으면(기본 설정), queryKey 배열과 부분적으로 일치하는 모든 쿼리가 취소됩니다.
+  // exact: true 옵션을 사용한다면 정확히 이전 쿼리만 취소합니다.
+  useEffect(() => {
+    return () => {
+      queryClient.cancelQueries({
         queryKey: [category, regionCode, slectedYYYYMMM, activeFilters],
-        queryFn: async ({ signal }) => {
-                    // 패칭 로직
-                // signal 객체는 AbortController와 연결되어 요청 취소 시 사용됩니다.
-            // 예: fetch API 사용 시 signal 객체를 fetch 함수의 옵션으로 전달하여 요청 취소 가능
-        },
-    });
+        exact: true
+      });
+    };
+  }, [category, regionCode, queryClient, slectedYYYYMMM, activeFilters]);
 
-    return { data, isPending, isError, error };
+  // useQuery는 쿼리 키 변경시마다 실행되어 해당 키에 해당 하는 데이터를 가져오고 캐시합니다.
+  const { data, isPending, isError, error } = useQuery({
+    queryKey: [category, regionCode, slectedYYYYMMM, activeFilters],
+    queryFn: async ({ signal }) => {
+      // 패칭 로직
+      // signal 객체는 AbortController와 연결되어 요청 취소 시 사용됩니다.
+      // 예: fetch API 사용 시 signal 객체를 fetch 함수의 옵션으로 전달하여 요청 취소 가능
+    },
+  });
+  return { data, isPending, isError, error };
 };
 
 export default useSiseWithReactQuery;
@@ -158,25 +110,21 @@ export default useSiseWithReactQuery;
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            staleTime: Infinity,
-            gcTime: Infinity,
-        },
+  defaultOptions: {
+    queries: {
+      staleTime: Infinity,
+      gcTime: Infinity,
     },
+  },
 });
 
 const App = () => {
-    return (
-            ...
-          <QueryClientProvider client={queryClient}>
-            ...
-        </QueryClientProvider>
-            ...
-    );
+  return (
+    <QueryClientProvider client={queryClient}>
+      ...
+    </QueryClientProvider>
+  );
 }
-
-export default App;
 ```
 
 또한,`React Query`의 캐시 기능을 적극 활용하여 성능을 개선했다. 사용자가 동일한 데이터를 요청할 때 즉시 제공될 수 있도록 했다. 이는 전월세 실거래가 데이터가 실시간성이 중요하지 않은 데이터라는 것을 고려한 설정이다.
