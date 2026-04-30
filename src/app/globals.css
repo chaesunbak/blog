@@ -101,6 +101,15 @@ input[type='search']::-webkit-search-results-decoration {
   --tw-prose-pre-code: #e2e8f0;
 }
 
+.prose a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.prose a:hover {
+  text-decoration: underline;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

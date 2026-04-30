@@ -27,6 +27,16 @@ function getCenteredImageStyle(style?: CSSProperties) {
 
 export function getMDXComponents(slug?: string): MDXComponents {
   return {
+    a: ({ href, children, ...props }) => (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        {...props}
+      >
+        {children}
+      </a>
+    ),
     img: (props) => {
       const { src, alt, style, ...rest } = props as ImageProps;
 
