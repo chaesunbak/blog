@@ -4,7 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { formatDisplayDate, type Post } from '@/lib/posts';
 import { cn } from '@/lib/utils';
 
-export function PostListItem({ post }: { post: Post; showDivider?: boolean }) {
+export function PostListItem({
+  post,
+  eager,
+}: {
+  post: Post;
+  showDivider?: boolean;
+  eager?: boolean;
+}) {
   const hasThumbnail = Boolean(post.thumbnail);
   const displayDate = formatDisplayDate(post.date);
 
@@ -53,6 +60,7 @@ export function PostListItem({ post }: { post: Post; showDivider?: boolean }) {
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                 sizes="(max-width: 1024px) 100vw, 26rem"
+                loading={eager ? 'eager' : 'lazy'}
               />
             </div>
           </Link>

@@ -33,8 +33,8 @@ export function PostList({
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-col gap-4">
-        {posts.map((post) => (
-          <PostListItem key={post.slug} post={post} />
+        {posts.map((post, index) => (
+          <PostListItem key={post.slug} post={post} eager={index < 2} />
         ))}
       </div>
 
