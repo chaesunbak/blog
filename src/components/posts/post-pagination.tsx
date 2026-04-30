@@ -28,13 +28,7 @@ export function PostPagination({
     <Pagination className="mt-14 justify-start">
       <PaginationContent>
         <PaginationItem>
-          {currentPage > 1 ? (
-            <PaginationPrevious href={buildHref(basePath, currentPage - 1)} />
-          ) : (
-            <span className="inline-flex h-11 items-center px-4 text-sm font-medium text-slate-300">
-              ‹ 이전
-            </span>
-          )}
+          <PaginationPrevious href={buildHref(basePath, currentPage - 1)} />
         </PaginationItem>
 
         {pages.map((page, index) => {
@@ -61,13 +55,7 @@ export function PostPagination({
         })}
 
         <PaginationItem>
-          {currentPage < totalPages ? (
-            <PaginationNext href={buildHref(basePath, currentPage + 1)} />
-          ) : (
-            <span className="inline-flex h-11 items-center px-4 text-sm font-medium text-slate-300">
-              다음 ›
-            </span>
-          )}
+          <PaginationNext href={buildHref(basePath, currentPage + 1)} />
         </PaginationItem>
       </PaginationContent>
     </Pagination>

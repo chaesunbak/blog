@@ -75,7 +75,7 @@ export default async function PostPage({
   );
 
   return (
-    <main>
+    <main className="mx-auto flex max-w-4xl flex-col px-2">
       <PostScrollProgress />
       <BreadcrumbJsonLd
         items={[
@@ -89,9 +89,11 @@ export default async function PostPage({
         publishedTime={publishedTime}
         modifiedTime={modifiedTime}
       />
-      <article className="site-frame flex w-full max-w-5xl flex-col gap-4 py-10 sm:py-12 lg:py-14">
-        <header className="site-panel flex flex-col gap-4 px-8 py-8 sm:px-10 sm:py-10">
-          <h1 className="text-6xl font-semibold text-gray-700">{post.title}</h1>
+      <article className="flex w-full flex-col gap-4 py-10 sm:py-12 lg:py-14">
+        <header className="site-panel flex flex-col gap-4 py-8 sm:py-10">
+          <h1 className="text-5xl font-semibold text-gray-700 md:text-6xl">
+            {post.title}
+          </h1>
           <div className="flex flex-wrap gap-3">
             {post.tags.map((tag) => (
               <Tag key={tag} href={`/tags/${encodeSegment(tag)}`}>
@@ -106,10 +108,8 @@ export default async function PostPage({
           )}
         </header>
 
-        <div className="site-panel px-6 sm:px-10">
-          <div className="prose prose-slate prose-headings:tracking-tight prose-img:rounded-3xl prose-img:border prose-img:border-slate-200 max-w-none">
-            {post.content}
-          </div>
+        <div className="prose prose-slate prose-headings:tracking-tight prose-img:rounded-3xl prose-img:border prose-img:border-slate-200 max-w-none">
+          {post.content}
         </div>
 
         <PostComments />
