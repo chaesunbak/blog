@@ -24,9 +24,7 @@ date: '2025-02-27'
 
 따라서, 위의 비용 문제를 해결하기 위해 문서 생성 시 고유한 랜덤 숫자 필드를 추가하는 방식을 도입했다. 랜덤 숫자는 32비트 정수 범위 내에서 생성되도록 설정했다. 랜덤 요소를 불러올 때는, 해당 범위 내에서 임의의 숫자를 생성한 후, **랜덤 숫자 필드 값이 생성된 숫자와 일치하거나 가장 가까운 문서를 조회**하는 방식으로 구현했다.
 
-아래 참고자료를 구글링으로 찾을 수 있었고, 매우 잘 정리되어있어서 큰 도움을 받았다.
-
-[참고자료 1 : Firestore : How to get random documents in a collection](https://stackoverflow.com/questions/46798981/firestore-how-to-get-random-documents-in-a-collection)
+구글링으로 관련 [스택오버플로우](https://stackoverflow.com/questions/46798981/firestore-how-to-get-random-documents-in-a-collection)를 찾을 수 있었고, 매우 잘 정리되어있어서 큰 도움을 받았다.
 
 객체 생성 시 랜덤 번호를 부여하고 이를 활용하는 방식은 게임, 추천 알고리즘 등 다양한 분야에서 널리 사용되는 효율적인 기법이라고 한다.
 
