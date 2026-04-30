@@ -13,7 +13,7 @@ const giscusConfig = {
   'reactions-enabled': '1',
   'emit-metadata': '0',
   'input-position': 'bottom',
-  theme: 'preferred_color_scheme',
+  theme: 'light',
   lang: 'ko',
 } as const;
 
