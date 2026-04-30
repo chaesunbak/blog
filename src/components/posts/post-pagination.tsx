@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment } from 'react';
 import {
   Pagination,
   PaginationContent,
@@ -7,45 +7,17 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
-
-type PostPaginationProps = {
-  currentPage: number;
-  totalPages: number;
-  basePath: string;
-};
-
-function buildHref(basePath: string, page: number) {
-  if (page <= 1) {
-    return basePath;
-  }
-
-  return `${basePath}?page=${page}`;
-}
-
-function buildPageRange(currentPage: number, totalPages: number) {
-  if (totalPages <= 5) {
-    return Array.from({ length: totalPages }, (_, index) => index + 1);
-  }
-
-  const pages = new Set<number>([1, totalPages, currentPage]);
-
-  if (currentPage > 1) {
-    pages.add(currentPage - 1);
-  }
-
-  if (currentPage < totalPages) {
-    pages.add(currentPage + 1);
-  }
-
-  return [...pages].sort((left, right) => left - right);
-}
+} from '@/components/ui/pagination';
 
 export function PostPagination({
   currentPage,
   totalPages,
   basePath,
-}: PostPaginationProps) {
+}: {
+  currentPage: number;
+  totalPages: number;
+  basePath: string;
+}) {
   if (totalPages <= 1) {
     return null;
   }
@@ -100,4 +72,30 @@ export function PostPagination({
       </PaginationContent>
     </Pagination>
   );
+}
+
+function buildHref(basePath: string, page: number) {
+  if (page <= 1) {
+    return basePath;
+  }
+
+  return `${basePath}?page=${page}`;
+}
+
+function buildPageRange(currentPage: number, totalPages: number) {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pages = new Set<number>([1, totalPages, currentPage]);
+
+  if (currentPage > 1) {
+    pages.add(currentPage - 1);
+  }
+
+  if (currentPage < totalPages) {
+    pages.add(currentPage + 1);
+  }
+
+  return [...pages].sort((left, right) => left - right);
 }
