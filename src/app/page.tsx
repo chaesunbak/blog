@@ -18,7 +18,7 @@ export async function generateMetadata({
   const currentPage = getPageFromSearchParam(params.page);
 
   return buildMetadata({
-    title: 'chaesunbak님의 블로그',
+    title: 'chaesunbak 님의 블로그',
     path: createPaginatedPath('/', currentPage),
   });
 }
