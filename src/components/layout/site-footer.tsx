@@ -3,6 +3,7 @@ import Link from 'next/link';
 const footerLinks = [
   { href: '/', label: '홈' },
   { href: '/tags', label: '태그' },
+  { href: '/guestbook', label: '방명록' },
   { href: '/feed', label: 'RSS' },
   { href: 'https://github.com/chaesunbak', label: 'GitHub' },
 ];

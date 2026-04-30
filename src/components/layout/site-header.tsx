@@ -4,6 +4,7 @@ import { SearchForm } from '@/components/search/search-form';
 const navigationItems = [
   { href: '/', label: '홈' },
   { href: '/tags', label: '태그' },
+  { href: '/guestbook', label: '방명록' },
   { href: '/feed', label: 'RSS' },
   { href: 'https://github.com/chaesunbak', label: 'GitHub', external: true },
 ];
