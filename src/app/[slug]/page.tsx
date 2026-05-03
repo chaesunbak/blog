@@ -9,7 +9,6 @@ import {
   getAllPostSlugs,
   getPostBySlug,
   getPostTimestamps,
-  getRecommendedCandidates,
 } from '@/lib/posts';
 import { resolveImageUrl } from '@/lib/site';
 import { PostComments } from '@/components/posts/post-comments';
@@ -75,8 +74,6 @@ export default async function PostPage({
     post.slug,
     post.date,
   );
-  const { candidates, latestPost } = await getRecommendedCandidates(post.slug, post.tags);
-
   return (
     <main className="mx-auto flex max-w-4xl flex-col px-2">
       <PostScrollProgress />
@@ -117,21 +114,7 @@ export default async function PostPage({
 
         <PostComments />
       </article>
-      {(candidates.length > 0 || latestPost) ? (
-        <PostNextRecommendation
-          currentSlug={post.slug}
-          candidates={candidates.map((c) => ({
-            slug: c.slug,
-            title: c.title,
-            thumbnail: c.thumbnail,
-          }))}
-          latestPost={latestPost ? {
-            slug: latestPost.slug,
-            title: latestPost.title,
-            thumbnail: latestPost.thumbnail,
-          } : null}
-        />
-      ) : null}
+      <PostNextRecommendation currentSlug={post.slug} />
     </main>
   );
 }

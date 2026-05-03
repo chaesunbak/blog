@@ -6,12 +6,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { type Post } from '@/lib/posts';
+import { type InferResponseType } from 'hono/client';
+import { api } from '@/lib/api/client';
 
 const AUTO_NAVIGATE_MS = 10_000;
 const VISITED_KEY = 'visited_posts';
 
-type RecommendedPost = Pick<Post, 'slug' | 'title' | 'thumbnail'>;
+type Recommendation = Extract<
+  InferResponseType<(typeof api.api.posts)[':slug']['recommendation']['$get']>,
+  { reason: string }
+>;
 
 function getVisitedSlugs(): Set<string> {
   try {
@@ -34,55 +38,47 @@ function markVisited(slug: string) {
 
 export function PostNextRecommendation({
   currentSlug,
-  candidates,
-  latestPost,
 }: {
   currentSlug: string;
-  candidates: RecommendedPost[];
-  latestPost: RecommendedPost | null;
 }) {
   const router = useRouter();
-  const [post, setPost] = useState<RecommendedPost | null>(null);
-  const [isLatestFallback, setIsLatestFallback] = useState(false);
+  const [recommendation, setRecommendation] = useState<Recommendation | null>(
+    null,
+  );
   const [activated, setActivated] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     const visited = getVisitedSlugs();
-    const pick = candidates.find((c) => !visited.has(c.slug)) ?? null;
-    if (pick) {
-      setPost(pick);
-      setIsLatestFallback(false);
-    } else if (latestPost && !visited.has(latestPost.slug)) {
-      setPost(latestPost);
-      setIsLatestFallback(true);
-    } else {
-      setPost(null);
-      setIsLatestFallback(false);
-    }
-  }, [currentSlug, candidates, latestPost]);
+    const visitedParam = [...visited].join(',');
+
+    api.api.posts[':slug'].recommendation
+      .$get({
+        param: { slug: currentSlug },
+        query: { visited: visitedParam },
+      })
+      .then(async (res) => {
+        if (!res.ok) return;
+        setRecommendation(await res.json());
+      });
+  }, [currentSlug]);
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLSpanElement>(null);
   const startedAtRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
 
-  const targetHref = `/${post?.slug}`;
+  const targetHref = `/${recommendation?.slug}`;
 
   useEffect(() => {
     router.prefetch(targetHref);
   }, [targetHref]);
 
   useEffect(() => {
-    if (dismissed || !post) {
-      return;
-    }
+    if (dismissed || !recommendation) return;
 
     const target = triggerRef.current;
-
-    if (!target) {
-      return;
-    }
+    if (!target) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -96,9 +92,8 @@ export function PostNextRecommendation({
     );
 
     observer.observe(target);
-
     return () => observer.disconnect();
-  }, [dismissed, post]);
+  }, [dismissed, recommendation]);
 
   const stopCountdown = useCallback(() => {
     if (rafRef.current !== null) {
@@ -122,9 +117,7 @@ export function PostNextRecommendation({
   }, [stopCountdown]);
 
   useEffect(() => {
-    if (!activated || dismissed) {
-      return;
-    }
+    if (!activated || dismissed) return;
 
     const tick = (now: number) => {
       if (startedAtRef.current === null) {
@@ -157,9 +150,7 @@ export function PostNextRecommendation({
     };
   }, [activated, dismissed]);
 
-  if (dismissed || !post) {
-    return null;
-  }
+  if (dismissed || !recommendation) return null;
 
   return (
     <>
@@ -176,10 +167,10 @@ export function PostNextRecommendation({
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <div className="flex min-w-0 items-center gap-3 sm:flex-1">
-            {post.thumbnail ? (
+            {recommendation.thumbnail ? (
               <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-slate-900 sm:size-16">
                 <Image
-                  src={post.thumbnail}
+                  src={recommendation.thumbnail}
                   alt=""
                   fill
                   sizes="64px"
@@ -192,10 +183,12 @@ export function PostNextRecommendation({
 
             <div className="min-w-0 flex-1">
               <div className="text-xs text-slate-400 sm:text-sm">
-                {isLatestFallback ? '최신 글' : '이 글도 좋아하실 거예요'}
+                {recommendation.reason === 'latest'
+                  ? '최신 글'
+                  : '이 글도 좋아하실 거예요'}
               </div>
               <div className="line-clamp-2 text-sm font-semibold text-slate-800 sm:truncate sm:text-base">
-                {post.title}
+                {recommendation.title}
               </div>
             </div>
           </div>
