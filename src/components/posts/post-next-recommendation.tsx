@@ -121,58 +121,62 @@ export function PostNextRecommendation({ post }: { post: RecommendedPost }) {
         role="region"
         aria-label="다음 글 추천"
         className={cn(
-          'fixed inset-x-0 bottom-4 z-50 mx-auto flex w-[calc(100%-1rem)] max-w-2xl items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-lg transition-all duration-500 ease-out sm:gap-4 sm:px-4',
+          'fixed inset-x-0 bottom-4 z-50 mx-auto w-[calc(100%-1rem)] max-w-2xl rounded-2xl border border-slate-200 bg-white p-3 transition-all duration-500 ease-out sm:px-4',
           activated
             ? 'translate-y-0 opacity-100'
             : 'pointer-events-none translate-y-4 opacity-0',
         )}
       >
-        {post.thumbnail ? (
-          <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-slate-900 sm:size-16">
-            <Image
-              src={post.thumbnail}
-              alt=""
-              fill
-              sizes="64px"
-              className="object-cover"
-            />
-          </div>
-        ) : (
-          <div className="size-14 shrink-0 rounded-xl bg-slate-100 sm:size-16" />
-        )}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex min-w-0 items-center gap-3 sm:flex-1">
+            {post.thumbnail ? (
+              <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-slate-900 sm:size-16">
+                <Image
+                  src={post.thumbnail}
+                  alt=""
+                  fill
+                  sizes="64px"
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <div className="size-14 shrink-0 rounded-xl bg-slate-100 sm:size-16" />
+            )}
 
-        <div className="min-w-0 flex-1">
-          <div className="text-xs text-slate-400 sm:text-sm">
-            이 글도 좋아하실 거예요
+            <div className="min-w-0 flex-1">
+              <div className="text-xs text-slate-400 sm:text-sm">
+                이 글도 좋아하실 거예요
+              </div>
+              <div className="line-clamp-2 text-sm font-semibold text-slate-800 sm:truncate sm:text-base">
+                {post.title}
+              </div>
+            </div>
           </div>
-          <div className="truncate text-sm font-semibold text-slate-800 sm:text-base">
-            {post.title}
-          </div>
-        </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            variant="ghost"
-            onClick={dismiss}
-            className="0 h-auto px-3 py-2 text-sm sm:px-4"
-          >
-            취소
-          </Button>
-          <Button
-            onClick={navigate}
-            className="relative h-auto overflow-hidden bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-100 sm:px-4"
-          >
-            <span
-              ref={progressRef}
-              aria-hidden="true"
-              className="absolute inset-0 origin-left bg-blue-200/70 will-change-transform"
-              style={{ transform: 'scaleX(0)' }}
-            />
-            <span className="relative inline-flex items-center gap-1.5">
-              지금 읽기
-              <ArrowRight className="size-4" />
-            </span>
-          </Button>
+          <div className="flex gap-2 sm:ml-auto sm:shrink-0 sm:items-center">
+            <Button
+              variant="ghost"
+              onClick={dismiss}
+              className="h-auto flex-1 px-3 py-2 text-sm sm:flex-none sm:px-4"
+            >
+              취소
+            </Button>
+            <Button
+              onClick={navigate}
+              className="relative h-auto flex-1 overflow-hidden bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-100 sm:flex-none sm:px-4"
+            >
+              <span
+                ref={progressRef}
+                aria-hidden="true"
+                className="absolute inset-0 origin-left bg-blue-200/70 will-change-transform"
+                style={{ transform: 'scaleX(0)' }}
+              />
+              <span className="relative inline-flex items-center gap-1.5">
+                지금 읽기
+                <ArrowRight className="size-4" />
+              </span>
+            </Button>
+          </div>
         </div>
       </div>
     </>
