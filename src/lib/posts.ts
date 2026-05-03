@@ -263,6 +263,37 @@ export const getPostBySlug = cache(
   },
 );
 
+export async function getRecommendedPost(
+  currentSlug: string,
+  tags: string[],
+): Promise<Post | null> {
+  const posts = await getAllPosts();
+  const others = posts.filter((post) => post.slug !== currentSlug);
+
+  if (others.length === 0) {
+    return null;
+  }
+
+  if (tags.length > 0) {
+    const tagSet = new Set(tags.map((tag) => normalizeSearchTarget(tag)));
+    const tagMatch = others.find((post) =>
+      post.tags.some((tag) => tagSet.has(normalizeSearchTarget(tag))),
+    );
+
+    if (tagMatch) {
+      return tagMatch;
+    }
+  }
+
+  const currentIndex = posts.findIndex((post) => post.slug === currentSlug);
+
+  if (currentIndex !== -1 && currentIndex + 1 < posts.length) {
+    return posts[currentIndex + 1];
+  }
+
+  return others[0];
+}
+
 export async function getAllTags(): Promise<TagSummary[]> {
   const posts = await getAllPosts();
   const tagCounts = new Map<string, number>();

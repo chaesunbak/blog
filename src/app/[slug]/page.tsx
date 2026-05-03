@@ -9,9 +9,11 @@ import {
   getAllPostSlugs,
   getPostBySlug,
   getPostTimestamps,
+  getRecommendedPost,
 } from '@/lib/posts';
 import { resolveImageUrl } from '@/lib/site';
 import { PostComments } from '@/components/posts/post-comments';
+import { PostNextRecommendation } from '@/components/posts/post-next-recommendation';
 import { Badge } from '@/components/ui/badge';
 import { PostScrollProgress } from '@/components/posts/post-scroll-progress';
 import { Tag } from '@/components/ui/tag';
@@ -73,6 +75,7 @@ export default async function PostPage({
     post.slug,
     post.date,
   );
+  const recommended = await getRecommendedPost(post.slug, post.tags);
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col px-2">
@@ -114,6 +117,15 @@ export default async function PostPage({
 
         <PostComments />
       </article>
+      {recommended ? (
+        <PostNextRecommendation
+          post={{
+            slug: recommended.slug,
+            title: recommended.title,
+            thumbnail: recommended.thumbnail,
+          }}
+        />
+      ) : null}
     </main>
   );
 }
