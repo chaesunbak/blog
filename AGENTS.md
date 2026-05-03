@@ -147,7 +147,7 @@ onSuccess: () => router.refresh(), // Re-runs RSC, gets fresh data
 
 ### Never use SHADOW
 
-## Component Style
+## React
 
 ### No render helper function
 
@@ -176,3 +176,22 @@ const Component = ({}: {...}) => {
 ```
 
 define props interface only if necessary.
+
+## TypeScript
+
+### Prefer Utility Types over New Types
+
+Whenever possible, avoid defining new types. Instead, use TypeScript utility types like `Pick`, `Omit`, `Partial`, etc., to derive types from existing ones.
+
+**Do:**
+
+```ts
+interface User {
+  id: string;
+  ...
+  role: string;
+}
+
+// Deriving the type using Pick
+type UserProfileProps = Pick<User, 'id' | 'name'>;
+```
