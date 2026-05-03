@@ -1,16 +1,16 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import matter from "gray-matter";
-import { compileMDX } from "next-mdx-remote/rsc";
-import type { StaticImageData } from "next/image";
-import { cache, type ReactNode } from "react";
-import rehypePrettyCode from "rehype-pretty-code";
-import remarkGfm from "remark-gfm";
-import { z } from "zod";
-import { getMDXComponents } from "../../mdx-components";
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import matter from 'gray-matter';
+import { compileMDX } from 'next-mdx-remote/rsc';
+import type { StaticImageData } from 'next/image';
+import { cache, type ReactNode } from 'react';
+import rehypePrettyCode from 'rehype-pretty-code';
+import remarkGfm from 'remark-gfm';
+import { z } from 'zod';
+import { getMDXComponents } from '../../mdx-components';
 
-const CONTENT_DIRECTORY = path.join(process.cwd(), "content");
-const POST_FILENAME = "index.mdx";
+const CONTENT_DIRECTORY = path.join(process.cwd(), 'content');
+const POST_FILENAME = 'index.mdx';
 const POSTS_PER_PAGE = 5;
 
 const postFrontmatterSchema = z.object({
@@ -23,7 +23,7 @@ const postFrontmatterSchema = z.object({
 });
 
 const rehypePrettyCodeOptions = {
-  theme: "github-dark",
+  theme: 'github-dark',
   keepBackground: true,
 };
 
@@ -64,10 +64,10 @@ function getPostSourcePath(slug: string) {
 
 function humanizeSlug(slug: string) {
   return slug
-    .split("-")
+    .split('-')
     .filter(Boolean)
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(" ");
+    .join(' ');
 }
 
 function normalizeList(values?: string[]) {
@@ -80,11 +80,11 @@ function normalizeThumbnail(
   slug: string,
   thumbnail?: StaticImageData | string,
 ): StaticImageData | string | undefined {
-  if (typeof thumbnail !== "string") {
+  if (typeof thumbnail !== 'string') {
     return thumbnail;
   }
 
-  if (thumbnail.startsWith("./")) {
+  if (thumbnail.startsWith('./')) {
     return `/content-assets/${encodeSegment(slug)}/${thumbnail.slice(2)}`;
   }
 
@@ -97,8 +97,8 @@ function normalizeMetadata(
 ): PostMetadata {
   return {
     title: metadata?.title?.trim() || humanizeSlug(slug),
-    description: metadata?.description?.trim() || "",
-    category: metadata?.category?.trim() || "Engineering",
+    description: metadata?.description?.trim() || '',
+    category: metadata?.category?.trim() || 'Engineering',
     date: metadata?.date,
     tags: normalizeList(metadata?.tags),
     thumbnail: normalizeThumbnail(slug, metadata?.thumbnail),
@@ -115,15 +115,16 @@ function sortPosts(a: Post, b: Post) {
     );
   }
 
-  return a.title.localeCompare(b.title, "ko");
+  return a.title.localeCompare(b.title, 'ko');
 }
 
 function normalizeSearchTarget(value: string) {
-  return value.toLocaleLowerCase("ko-KR");
+  return value.toLocaleLowerCase('ko-KR');
 }
 
 function formatZodIssue(issue: z.core.$ZodIssue) {
-  const fieldPath = issue.path.length > 0 ? issue.path.join(".") : "frontmatter";
+  const fieldPath =
+    issue.path.length > 0 ? issue.path.join('.') : 'frontmatter';
 
   return `${fieldPath}: ${issue.message}`;
 }
@@ -134,7 +135,7 @@ function parsePostSource(source: string, sourcePath: string) {
   try {
     parsed = matter(source);
   } catch (error) {
-    const reason = error instanceof Error ? error.message : "Unknown error";
+    const reason = error instanceof Error ? error.message : 'Unknown error';
 
     throw new Error(`Failed to parse frontmatter in ${sourcePath}: ${reason}`);
   }
@@ -142,7 +143,7 @@ function parsePostSource(source: string, sourcePath: string) {
   const metadataResult = postFrontmatterSchema.safeParse(parsed.data);
 
   if (!metadataResult.success) {
-    const issues = metadataResult.error.issues.map(formatZodIssue).join("; ");
+    const issues = metadataResult.error.issues.map(formatZodIssue).join('; ');
 
     throw new Error(
       `Invalid frontmatter in ${sourcePath}: ${issues}. Received: ${JSON.stringify(parsed.data)}`,
@@ -151,7 +152,7 @@ function parsePostSource(source: string, sourcePath: string) {
 
   const sanitizedContent = parsed.content.replace(
     /^\[##_Image\|.*?_##\]\s*$/gm,
-    "",
+    '',
   );
 
   return {
@@ -205,7 +206,7 @@ export const getAllPostSlugs = cache(async () => {
     return entries
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
-      .sort((left, right) => left.localeCompare(right, "ko"));
+      .sort((left, right) => left.localeCompare(right, 'ko'));
   } catch {
     return [];
   }
@@ -217,7 +218,7 @@ export const getAllPosts = cache(async (): Promise<Post[]> => {
   const posts = await Promise.all(
     slugs.map(async (slug) => {
       const sourcePath = getPostSourcePath(slug);
-      const source = await fs.readFile(sourcePath, "utf8");
+      const source = await fs.readFile(sourcePath, 'utf8');
       const { body, metadata } = parsePostSource(source, sourcePath);
 
       return {
@@ -240,7 +241,7 @@ export const getPostBySlug = cache(
     }
 
     const sourcePath = getPostSourcePath(slug);
-    const source = await fs.readFile(sourcePath, "utf8");
+    const source = await fs.readFile(sourcePath, 'utf8');
     const { body, metadata } = parsePostSource(source, sourcePath);
     const { content } = await compileMDX({
       source: body,
@@ -263,35 +264,55 @@ export const getPostBySlug = cache(
   },
 );
 
-export async function getRecommendedPost(
+const RECOMMENDATION_CANDIDATES = 5;
+
+export type RecommendedCandidatesResult = {
+  candidates: Post[];
+  latestPost: Post | null;
+};
+
+export async function getRecommendedCandidates(
   currentSlug: string,
   tags: string[],
-): Promise<Post | null> {
+): Promise<RecommendedCandidatesResult> {
   const posts = await getAllPosts();
+  const currentIndex = posts.findIndex((post) => post.slug === currentSlug);
   const others = posts.filter((post) => post.slug !== currentSlug);
+  const latestPost = others[0] ?? null;
 
   if (others.length === 0) {
-    return null;
+    return { candidates: [], latestPost: null };
   }
 
   if (tags.length > 0) {
     const tagSet = new Set(tags.map((tag) => normalizeSearchTarget(tag)));
-    const tagMatch = others.find((post) =>
+    const tagMatches = others.filter((post) =>
       post.tags.some((tag) => tagSet.has(normalizeSearchTarget(tag))),
     );
 
-    if (tagMatch) {
-      return tagMatch;
+    if (tagMatches.length > 0) {
+      const after = tagMatches.filter(
+        (p) => posts.findIndex((q) => q.slug === p.slug) > currentIndex,
+      );
+      const before = tagMatches.filter(
+        (p) => posts.findIndex((q) => q.slug === p.slug) < currentIndex,
+      );
+      return {
+        candidates: [...after, ...before].slice(0, RECOMMENDATION_CANDIDATES),
+        latestPost,
+      };
     }
   }
 
-  const currentIndex = posts.findIndex((post) => post.slug === currentSlug);
-
+  const fallback: Post[] = [];
   if (currentIndex !== -1 && currentIndex + 1 < posts.length) {
-    return posts[currentIndex + 1];
+    fallback.push(posts[currentIndex + 1]);
   }
-
-  return others[0];
+  for (const p of others) {
+    if (fallback.length >= RECOMMENDATION_CANDIDATES) break;
+    if (!fallback.includes(p)) fallback.push(p);
+  }
+  return { candidates: fallback, latestPost };
 }
 
 export async function getAllTags(): Promise<TagSummary[]> {
@@ -315,7 +336,7 @@ export async function getAllTags(): Promise<TagSummary[]> {
         return right.count - left.count;
       }
 
-      return left.name.localeCompare(right.name, "ko");
+      return left.name.localeCompare(right.name, 'ko');
     });
 }
 
@@ -369,10 +390,10 @@ export function formatDisplayDate(date?: string) {
     return date;
   }
 
-  return new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   }).format(parsedDate);
 }
 

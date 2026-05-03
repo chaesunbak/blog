@@ -9,26 +9,72 @@ import { Button } from '@/components/ui/button';
 import { type Post } from '@/lib/posts';
 
 const AUTO_NAVIGATE_MS = 10_000;
+const VISITED_KEY = 'visited_posts';
 
 type RecommendedPost = Pick<Post, 'slug' | 'title' | 'thumbnail'>;
 
-export function PostNextRecommendation({ post }: { post: RecommendedPost }) {
+function getVisitedSlugs(): Set<string> {
+  try {
+    const raw = sessionStorage.getItem(VISITED_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function markVisited(slug: string) {
+  try {
+    const visited = getVisitedSlugs();
+    visited.add(slug);
+    sessionStorage.setItem(VISITED_KEY, JSON.stringify([...visited]));
+  } catch {
+    // sessionStorage unavailable
+  }
+}
+
+export function PostNextRecommendation({
+  currentSlug,
+  candidates,
+  latestPost,
+}: {
+  currentSlug: string;
+  candidates: RecommendedPost[];
+  latestPost: RecommendedPost | null;
+}) {
   const router = useRouter();
+  const [post, setPost] = useState<RecommendedPost | null>(null);
+  const [isLatestFallback, setIsLatestFallback] = useState(false);
   const [activated, setActivated] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    const visited = getVisitedSlugs();
+    const pick = candidates.find((c) => !visited.has(c.slug)) ?? null;
+    if (pick) {
+      setPost(pick);
+      setIsLatestFallback(false);
+    } else if (latestPost && !visited.has(latestPost.slug)) {
+      setPost(latestPost);
+      setIsLatestFallback(true);
+    } else {
+      setPost(null);
+      setIsLatestFallback(false);
+    }
+  }, [currentSlug, candidates, latestPost]);
+
   const triggerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLSpanElement>(null);
   const startedAtRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
 
-  const targetHref = `/${post.slug}`;
+  const targetHref = `/${post?.slug}`;
 
   useEffect(() => {
     router.prefetch(targetHref);
   }, [targetHref]);
 
   useEffect(() => {
-    if (dismissed) {
+    if (dismissed || !post) {
       return;
     }
 
@@ -41,6 +87,7 @@ export function PostNextRecommendation({ post }: { post: RecommendedPost }) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
+          markVisited(currentSlug);
           setActivated(true);
           observer.disconnect();
         }
@@ -51,7 +98,7 @@ export function PostNextRecommendation({ post }: { post: RecommendedPost }) {
     observer.observe(target);
 
     return () => observer.disconnect();
-  }, [dismissed]);
+  }, [dismissed, post]);
 
   const stopCountdown = useCallback(() => {
     if (rafRef.current !== null) {
@@ -110,7 +157,7 @@ export function PostNextRecommendation({ post }: { post: RecommendedPost }) {
     };
   }, [activated, dismissed]);
 
-  if (dismissed) {
+  if (dismissed || !post) {
     return null;
   }
 
@@ -145,7 +192,7 @@ export function PostNextRecommendation({ post }: { post: RecommendedPost }) {
 
             <div className="min-w-0 flex-1">
               <div className="text-xs text-slate-400 sm:text-sm">
-                이 글도 좋아하실 거예요
+                {isLatestFallback ? '최신 글' : '이 글도 좋아하실 거예요'}
               </div>
               <div className="line-clamp-2 text-sm font-semibold text-slate-800 sm:truncate sm:text-base">
                 {post.title}
