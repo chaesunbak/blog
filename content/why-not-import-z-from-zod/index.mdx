@@ -1,0 +1,83 @@
+---
+title: 'import { z } from "zod"하면 안되는 이유'
+description: '사용하지도 않는 모듈이 번들에 포함되었다고?'
+category: '트러블슈팅'
+date: '2026-05-08'
+tags:
+  - 'Zod'
+  - 'ESLint'
+  - 'Github Actions'
+  - 'import'
+thumbnail: './thumbnail.png'
+---
+
+## 문제상황
+
+번들 분석도구를 사용해서 번들 분석을 해봤더니 사용하지않는 `zod/locales` 모듈이 번들에 포함되어 있었다. 크기는 무려 300KB!
+
+구글링 해보니 이미 비슷한 이슈를 겪고 있는 사람들이 있었다.
+
+## 해결방법
+
+임포트 방식을 다음과 같이 변경하면 간단하게 해결된다.
+
+```diff
+-- import { z } from "zod"
+++ import * as z from "zod"
+```
+
+## 무엇이 다른걸까?
+
+```tsx
+import { z } from 'zod'; // 네임드 임포트
+import * as z from 'zod'; // 네임스페이스 임포트
+```
+
+전자는 네임드 임포트이고, 후자는 네임스페이스 임포트이다.
+
+방법만 다른 것은 아니다.
+
+```tsx
+import { z } from 'zod';
+
+z.string();
+```
+
+`z` 모듈을 가져와 사용한 것임.
+
+```tsx
+import * as z from 'zod';
+
+z.string();
+```
+
+`string` 모듈을 가져와 사용한 것임.
+
+## 원인
+
+무엇을 가져오냐에 차이가 있었던 것이다.
+
+번들러는 올바르게 트리쉐이킹을 수행했다.
+
+다만 zod는 패키지의 모든 객체를 `z` 객체에 묶어서 export 하고 있는데 이걸 가져와서 사용하면 패키지의 모든 모듈이 번들에 포함되게 되는 것이다.
+
+## 재발방지
+
+ESLint 룰을 추가해주자. zod 패키지를 import 하는 경우 네임드 임포트 방식을 강제해버려서 헷갈림을 방지하자.
+
+```json
+// .eslintrc.json
+{
+  "rules": {
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "ImportDeclaration[source.value='zod'] > ImportSpecifier",
+        "message": "Use `import * as z from \"zod\"` instead of named import"
+      }
+    ]
+  }
+}
+```
+
+PR을 올리면 번들 크기 변화를 리포트해주는 Github Actions도 있다.
