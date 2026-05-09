@@ -3,6 +3,8 @@ title: '콜백 함수, 익명 함수(람다), 클로저'
 description: '이 3인방 너무 헷갈려'
 category: '위키'
 date: '2025-07-28'
+tags:
+  - 'Closure'
 ---
 
 ## 콜백 함수(Callback Function)
@@ -31,11 +33,11 @@ fs.readFile('/Users/joe/test.txt', 'utf8', (err, data) => {
 ```
 
 ```js
-const myButton = document.getElementById("myButton");
+const myButton = document.getElementById('myButton');
 
 // 클릭 이벤트가 발생하면 실행될 콜백함수를 등록한다.
-myButton.addEventListener("click", () => {
-  alert("버튼이 클릭되었습니다!");
+myButton.addEventListener('click', () => {
+  alert('버튼이 클릭되었습니다!');
 });
 ```
 
