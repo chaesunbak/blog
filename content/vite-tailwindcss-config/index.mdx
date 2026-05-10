@@ -40,18 +40,17 @@ export default defineConfig({
 ```
 
 ```tsx
-
 //main.tsx
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
-import "./index.css";
-import App from "./App.tsx";
+import './index.css';
+import App from './App.tsx';
 
-createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
-      <App />
-  </StrictMode>
+    <App />
+  </StrictMode>,
 );
 ```
 
@@ -70,4 +69,6 @@ npm install -D prettier prettier-plugin-tailwindcss
 }
 ```
 
-[참고자료 Get started with Tailwind CSS Using Vite](https://tailwindcss.com/docs/installation/using-vite)
+## 참고자료
+
+[참고자료 1 Get started with Tailwind CSS Using Vite](https://tailwindcss.com/docs/installation/using-vite)
