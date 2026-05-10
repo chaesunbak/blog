@@ -10,9 +10,9 @@ tags:
 
 ## 문제상황
 
-전월세 실거래가 공공데이터를 활용한 지도 서비스([대방](https://dae-bang.vercel.app/onetwo?lat=37.49436732800421&lng=127.01446798508894&region=11650))은 [SPA](https://developer.mozilla.org/ko/docs/Glossary/SPA)(Single Page Application)로 설계되었다.
+전월세 실거래가 공공데이터를 활용한 지도 서비스([대방](https://dae-bang.vercel.app/onetwo?lat=37.49436732800421&lng=127.01446798508894&region=11650))은 SPA(Single Page Application)로 설계되었다.
 
-SPA란 하나의 HTML 페이지로 실행되는 웹 애플리케이션으로, 최초 페이지 로딩 후 JavaScript를 통해 동적으로 페이지 내용을 갱신한다. 따라서, 동적이고 사용자와 상호작용이 많은 앱을 구현하는데 적절하지만, 처음 접속시 모든 JavaScript를 파일을 다운로드 해야함으로 첫 페이지 로딩이 오래걸리는 것이 단점이다. 특히 지도 서비스인 대방은 [외부 지도API](https://apis.map.kakao.com/)를 불러오는데 추가적인 시간이 소요되므로, 초기 로딩을 단축하여 [웹 성능](https://developer.mozilla.org/ko/docs/Web/Performance)(Web Performance)를 향상시키는 것이 관건이었다.
+SPA란 하나의 HTML 페이지로 실행되는 웹 애플리케이션으로, 최초 페이지 로딩 후 JavaScript를 통해 동적으로 페이지 내용을 갱신한다. 따라서, 동적이고 사용자와 상호작용이 많은 앱을 구현하는데 적절하지만, 처음 접속시 모든 JavaScript를 파일을 다운로드 해야함으로 첫 페이지 로딩이 오래걸리는 것이 단점이다. 특히 지도 서비스인 대방은 [외부 지도API](https://apis.map.kakao.com/)를 불러오는데 추가적인 시간이 소요되므로, 초기 로딩을 단축하여 웹 성능(Web Performance)를 향상시키는 것이 관건이었다.
 
 ## 번들링 (Bundling)
 
