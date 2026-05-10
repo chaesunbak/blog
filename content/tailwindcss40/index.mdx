@@ -14,10 +14,10 @@ thumbnail: './thumbnail.webp'
 
 ## 주요 변경점
 
-- **CSS 우선 구성 (CSS First Configuration):** `tailwind.config.js`에서 벗어나 CSS 파일 내에서 직접 설정을 관리합니다.
-- **간소화된 설치**
-- **Rust 기반 Lightning CSS 엔진 도입을 통한 빌드 성능 개선**
-- **새로운 유틸리티 클래스 추가**
+- CSS 우선 구성 (CSS First Configuration): `tailwind.config.js`에서 벗어나 CSS 파일 내에서 직접 설정을 관리.
+- 간소화된 설치
+- Rust 기반 Lightning CSS 엔진 도입을 통한 빌드 성능 개선
+- 새로운 유틸리티 클래스 추가
 
 ## CSS 우선 구성(CSS First Configuration)
 
@@ -50,9 +50,6 @@ module.exports = {
       spacing: {
         '8xl': '96rem',
       },
-      borderRadius: {
-        '4xl': '2rem',
-      },
     },
   },
   plugins: [
@@ -64,8 +61,8 @@ module.exports = {
 
 이러한 방식은 강력한 커스터마이징 기능을 제공했지만, 몇가지 단점이 있었다.
 
-- **학습 곡선** : Tailwind CSS 자체의 유틸리티 클래스 외에, `config.js`의 고유한 문법과 구조를 익혀야 합니다.
-- **어색함** : CSS 스타일을 관리함에도 불구하고 JavaScript 파일과 문법을 사용해야 하는 점이 다소 어색합니다.
+- 학습 곡선 : Tailwind CSS 자체의 유틸리티 클래스 외에, `config.js`의 고유한 문법과 구조를 익혀야 합니다.
+- 어색함 : CSS 스타일을 관리함에도 불구하고 JavaScript 파일과 문법을 사용해야 하는 점이 다소 어색합니다.
 
 ### CSS 우선 설정
 
@@ -96,9 +93,9 @@ Tailwind CSS 4.0부터는 주 CSS 파일(예: `global.css`) 내에서 CSS 문법
 
 이 새로운 접근 방식 또한 일정량의 학습을 요구한다는 단점이 있지만 장점은 명확하다.
 
-- **간결함:** 프로젝트 루트에서 `tailwind.config.js` 설정 파일 하나가 줄어들어 전체적인 구조가 단순해진다.
-- **직관성과 통합성:** CSS 스타일과 관련된 설정을 실제 CSS 파일에서 [@import](https://developer.mozilla.org/ko/docs/Web/CSS/@import), [캐스케이드 레이어](https://developer.mozilla.org/ko/docs/Web/CSS/@layer), CSS 변수 등의 CSS 문법으로 직접 다루므로 매우 직관적이다. 또한 기존의 CSS 스타일 시트와 유기적인 통합이 가능하다.
-- **전이성** : 이렇게 학습한 CSS 문법은 Tailwind CSS를 사용하지 않더라도 적용가능하다.
+- 간결함: 프로젝트 루트에서 `tailwind.config.js` 설정 파일 하나가 줄어들어 전체적인 구조가 단순해진다.
+- 직관성과 통합성: CSS 스타일과 관련된 설정을 실제 CSS 파일에서 [@import](https://developer.mozilla.org/ko/docs/Web/CSS/@import), [캐스케이드 레이어](https://developer.mozilla.org/ko/docs/Web/CSS/@layer), CSS 변수 등의 CSS 문법으로 직접 다루므로 매우 직관적이다. 또한 기존의 CSS 스타일 시트와 유기적인 통합이 가능하다.
+- 전이성 : 이렇게 학습한 CSS 문법은 Tailwind CSS를 사용하지 않더라도 적용가능하다.
 
 #### 기존 `tailwind.config.js`와의 호환하기
 
