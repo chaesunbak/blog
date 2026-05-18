@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
 import { BlogPostingJsonLd } from '@/components/seo/blog-posting-json-ld';
 import { BreadcrumbJsonLd } from '@/components/seo/breadcrumb-json-ld';
 import { buildMetadata } from '@/lib/metadata';
@@ -89,8 +90,19 @@ export default async function PostPage({
         publishedTime={publishedTime}
         modifiedTime={modifiedTime}
       />
-      <article className="flex w-full flex-col gap-4 py-10 sm:py-12 lg:py-14">
+      <article className="flex w-full flex-col gap-4 pt-4 pb-10">
         <header className="site-panel flex flex-col gap-4 py-8 sm:py-10">
+          {post.thumbnail && (
+            <div className="relative aspect-video w-full overflow-hidden rounded-2xl">
+              <Image
+                src={post.thumbnail}
+                alt={post.title}
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
+          )}
           <h1 className="text-5xl font-semibold text-gray-700 md:text-6xl">
             {post.title}
           </h1>
