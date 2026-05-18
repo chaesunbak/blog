@@ -6,6 +6,7 @@ import { BreadcrumbJsonLd } from '@/components/seo/breadcrumb-json-ld';
 import { buildMetadata } from '@/lib/metadata';
 import {
   encodeSegment,
+  extractHeadings,
   formatDisplayDate,
   getAllPostSlugs,
   getPostBySlug,
@@ -17,6 +18,7 @@ import { PostNextRecommendation } from '@/components/posts/post-next-recommendat
 import { Badge } from '@/components/ui/badge';
 import { PostScrollProgress } from '@/components/posts/post-scroll-progress';
 import { Tag } from '@/components/ui/tag';
+import { PostToc } from '@/components/posts/post-toc';
 
 export async function generateStaticParams() {
   const slugs = await getAllPostSlugs();
@@ -71,12 +73,13 @@ export default async function PostPage({
 
   const displayDate = formatDisplayDate(post.date);
   const path = `/${post.slug}`;
+  const headings = extractHeadings(post.body);
   const { publishedTime, modifiedTime } = await getPostTimestamps(
     post.slug,
     post.date,
   );
   return (
-    <main className="mx-auto flex max-w-3xl flex-col px-2">
+    <main className="relative mx-auto flex max-w-3xl flex-col px-2">
       <PostScrollProgress />
       <BreadcrumbJsonLd
         items={[
@@ -90,6 +93,12 @@ export default async function PostPage({
         publishedTime={publishedTime}
         modifiedTime={modifiedTime}
       />
+      <aside className="absolute right-full top-10 hidden h-full w-72 pr-4 xl:block">
+        <div className="sticky top-24">
+          <PostToc headings={headings} />
+        </div>
+      </aside>
+
       <article className="flex w-full flex-col gap-4 pt-4 pb-10">
         <header className="site-panel flex flex-col gap-4 py-8 sm:py-10">
           {post.thumbnail && (

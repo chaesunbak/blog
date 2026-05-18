@@ -60,11 +60,6 @@ body {
   box-sizing: border-box;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
 a:focus-visible {
   @apply ring-ring rounded-sm ring-[2px] ring-offset-1 outline-none;
 }
@@ -194,6 +189,11 @@ input[type='search']::-webkit-search-results-decoration {
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 @layer components {
@@ -204,6 +204,15 @@ input[type='search']::-webkit-search-results-decoration {
   .site-panel-muted {
     @apply rounded-[2rem] border border-white/80 bg-white/72 backdrop-blur-sm;
   }
+}
+
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
 }
 
 /* --- Code Highlighting Styles --- */

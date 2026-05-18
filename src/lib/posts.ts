@@ -5,6 +5,7 @@ import { compileMDX } from 'next-mdx-remote/rsc';
 import type { StaticImageData } from 'next/image';
 import { cache, type ReactNode } from 'react';
 import rehypePrettyCode from 'rehype-pretty-code';
+import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 import { z } from 'zod';
 import { getMDXComponents } from '../../mdx-components';
@@ -250,7 +251,7 @@ export const getPostBySlug = cache(
         parseFrontmatter: false,
         mdxOptions: {
           remarkPlugins: [remarkGfm],
-          rehypePlugins: [[rehypePrettyCode, rehypePrettyCodeOptions]],
+          rehypePlugins: [rehypeSlug, [rehypePrettyCode, rehypePrettyCodeOptions]],
         },
       },
     });
@@ -406,6 +407,41 @@ export function getPageFromSearchParam(page?: string | string[]) {
   }
 
   return Math.floor(parsedPage);
+}
+
+export type HeadingItem = {
+  id: string;
+  text: string;
+  level: number;
+};
+
+// Mirrors rehype-slug's ID generation (github-slugger compatible)
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[\s]+/g, '-')
+    .replace(/[^\p{L}\p{N}\-_]/gu, '')
+    .replace(/^-+|-+$/g, '');
+}
+
+export function extractHeadings(body: string): HeadingItem[] {
+  const headingRegex = /^(#{1,6})\s+(.+)$/gm;
+  const headings: HeadingItem[] = [];
+  const slugCount = new Map<string, number>();
+
+  let match: RegExpExecArray | null;
+  while ((match = headingRegex.exec(body)) !== null) {
+    const level = match[1].length;
+    const text = match[2].replace(/\*\*|__|\*|_|`/g, '').trim();
+    const baseId = slugify(text);
+    const count = slugCount.get(baseId) ?? 0;
+    const id = count === 0 ? baseId : `${baseId}-${count}`;
+    slugCount.set(baseId, count + 1);
+    headings.push({ id, text, level });
+  }
+
+  return headings;
 }
 
 export function paginateItems<T>(
