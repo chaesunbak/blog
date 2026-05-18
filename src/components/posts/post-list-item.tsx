@@ -35,7 +35,7 @@ export function PostListItem({
             hasThumbnail && 'order-2 md:order-1 md:min-w-0',
           )}
         >
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="default">{post.category}</Badge>
             <Badge variant="secondary">{displayDate ?? '작성일 미정'}</Badge>
           </div>
