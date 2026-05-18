@@ -206,13 +206,12 @@ input[type='search']::-webkit-search-results-decoration {
   }
 }
 
-.scrollbar-hidden {
+@utility scrollbar-hidden {
   scrollbar-width: none;
   -ms-overflow-style: none;
-}
-
-.scrollbar-hidden::-webkit-scrollbar {
-  display: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* --- Code Highlighting Styles --- */
