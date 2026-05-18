@@ -19,7 +19,7 @@ export default function GuestbookPage() {
         ]}
       />
       <div className="px-6 sm:px-10">
-        <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">방명록</h1>
+        <h1 className="text-2xl font-bold text-gray-700 sm:text-3xl">방명록</h1>
       </div>
       <PostComments />
     </main>
