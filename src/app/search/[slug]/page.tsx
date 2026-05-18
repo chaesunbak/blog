@@ -52,7 +52,7 @@ export default async function SearchPage({
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col py-10 sm:py-12 lg:py-14">
+    <main className="mx-auto flex w-full max-w-3xl flex-col py-10 sm:py-12 lg:py-14">
       <BreadcrumbJsonLd
         items={[
           { name: '홈', path: '/' },

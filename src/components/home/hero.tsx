@@ -13,7 +13,7 @@ export function Hero() {
 
   return (
     <section data-theme={theme} className="site-panel">
-      <div className="grid gap-8 px-6 py-6 md:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] md:items-center md:px-8 md:py-8">
+      <div className="grid gap-8 p-4 md:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] md:items-center">
         <div
           className="mx-auto w-full max-w-[24rem]"
           aria-label="노을빛 바다 위를 떠다니는 돛단배 일러스트"

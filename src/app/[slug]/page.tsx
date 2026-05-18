@@ -75,7 +75,7 @@ export default async function PostPage({
     post.date,
   );
   return (
-    <main className="mx-auto flex max-w-4xl flex-col px-2">
+    <main className="mx-auto flex max-w-3xl flex-col px-2">
       <PostScrollProgress />
       <BreadcrumbJsonLd
         items={[

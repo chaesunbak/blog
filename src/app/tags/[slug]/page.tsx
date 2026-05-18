@@ -66,7 +66,7 @@ export default async function TagPostsPage({
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 py-10 sm:py-12 lg:py-14">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 py-10 sm:py-12 lg:py-14">
       <BreadcrumbJsonLd
         items={[
           { name: '홈', path: '/' },

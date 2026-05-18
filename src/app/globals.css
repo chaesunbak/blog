@@ -197,10 +197,6 @@ input[type='search']::-webkit-search-results-decoration {
 }
 
 @layer components {
-  .site-frame {
-    @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8;
-  }
-
   .site-panel {
     @apply rounded-[2rem] border border-white/80 bg-white/88 backdrop-blur-sm;
   }

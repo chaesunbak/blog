@@ -11,7 +11,7 @@ export const metadata: Metadata = buildMetadata({
 
 export default function GuestbookPage() {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 py-10 sm:py-12 lg:py-14">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 py-10 sm:py-12 lg:py-14">
       <BreadcrumbJsonLd
         items={[
           { name: '홈', path: '/' },

@@ -36,7 +36,7 @@ export default async function Home({
   );
 
   return (
-    <main className="site-frame mx-auto flex w-full max-w-5xl flex-col gap-10 py-10 sm:py-12 lg:py-14">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 py-10 sm:py-12 lg:py-14">
       {currentPage === 1 && <Hero />}
       <PostList
         posts={items}
