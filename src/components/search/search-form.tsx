@@ -3,8 +3,8 @@
 import { Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useId, useState } from 'react';
-import { Responsive } from '@/shared/components/responsive';
-import { useIsMobile } from '@/shared/hooks/use-is-mobile';
+import { Responsive } from '@/components/shared/responsive';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,10 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Kbd,
-  KbdGroup,
-} from '@/components/ui/kbd';
+import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { cn } from '@/lib/utils';
 
 const SearchField = ({
@@ -42,7 +39,7 @@ const SearchField = ({
       value={query}
       autoFocus={autoFocus}
       onChange={(event) => onChange(event.target.value)}
-      className="h-11 w-full rounded-full border border-slate-200 bg-white pr-12 pl-11 text-sm text-slate-950 outline-none ring-offset-1 transition-all placeholder:text-muted-foreground focus-visible:ring-[2px] focus-visible:ring-ring"
+      className="placeholder:text-muted-foreground focus-visible:ring-ring h-11 w-full rounded-full border border-slate-200 bg-white pr-12 pl-11 text-sm text-slate-950 ring-offset-1 transition-all outline-none focus-visible:ring-[2px]"
       role="searchbox"
     />
     <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2" />
