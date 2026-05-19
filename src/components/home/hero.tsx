@@ -11,7 +11,10 @@ async function safeFetchCurrentWeather(): Promise<WeatherKind | null> {
   try {
     return await fetchCurrentWeather();
   } catch (error) {
-    console.warn('[hero] failed to fetch weather, falling back to none:', error);
+    console.warn(
+      '[hero] failed to fetch weather, falling back to none:',
+      error,
+    );
     return null;
   }
 }
@@ -33,7 +36,8 @@ export async function Hero() {
 
         <div className="flex flex-col gap-3">
           <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-            바다를 항해하는 배가 멋지다고 생각해서 선박이라고 이름 지었습니다.
+            바다를 항해하는 배가 멋지다고 생각해서 선박이라는 닉네임을
+            지었습니다.
           </p>
         </div>
       </div>
