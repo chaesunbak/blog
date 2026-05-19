@@ -41,7 +41,7 @@ export async function fetchCurrentWeather(): Promise<WeatherKind> {
 
   const res = await fetch(
     `https://api.weatherapi.com/v1/current.json?key=${key}&q=Seoul`,
-    { next: { revalidate: 600 } },
+    { next: { revalidate: 3600 } },
   );
   if (!res.ok) {
     throw new Error(`Weather API responded with status ${res.status}`);
