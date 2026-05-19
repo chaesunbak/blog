@@ -1,0 +1,170 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+/* ---------- Clouds (storybook puffy) ---------- */
+
+.cloud {
+  position: absolute;
+  width: 22%;
+  height: 7%;
+  background: #ffffff;
+  border-radius: 9999px;
+  box-shadow:
+    -10% -60% 0 -8% #ffffff,
+    18% -90% 0 -10% #ffffff,
+    42% -45% 0 -14% #ffffff,
+    -28% -25% 0 -10% #ffffff,
+    0 4px 8px rgba(70, 90, 120, 0.12);
+  filter: drop-shadow(0 1px 2px rgba(70, 90, 120, 0.18));
+  opacity: 0.95;
+  animation: cloudDrift linear infinite;
+}
+
+.cloud::before,
+.cloud::after {
+  content: '';
+  position: absolute;
+  background: #ffffff;
+  border-radius: 9999px;
+}
+
+.cloud::before {
+  top: -55%;
+  left: 18%;
+  width: 55%;
+  height: 130%;
+}
+
+.cloud::after {
+  top: -30%;
+  left: 48%;
+  width: 45%;
+  height: 100%;
+}
+
+.cloud1 {
+  top: 14%;
+  animation-duration: 60s;
+  animation-delay: -10s;
+}
+
+.cloud2 {
+  top: 28%;
+  width: 28%;
+  height: 8%;
+  animation-duration: 80s;
+  animation-delay: -40s;
+  opacity: 0.85;
+}
+
+.cloud3 {
+  top: 8%;
+  width: 18%;
+  height: 6%;
+  animation-duration: 95s;
+  animation-delay: -25s;
+  opacity: 0.75;
+}
+
+@keyframes cloudDrift {
+  0% {
+    transform: translateX(-40%);
+  }
+  100% {
+    transform: translateX(540%);
+  }
+}
+
+/* ---------- Rain ---------- */
+
+.rain {
+  position: absolute;
+  inset: 0;
+}
+
+.drop {
+  position: absolute;
+  top: -10%;
+  width: 1.5px;
+  height: 14px;
+  background: linear-gradient(180deg, transparent, rgba(220, 230, 245, 0.9));
+  border-radius: 2px;
+  animation: raindrop linear infinite;
+}
+
+@keyframes raindrop {
+  0% {
+    top: -10%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    top: 50%;
+    opacity: 0;
+  }
+}
+
+/* ---------- Snow ---------- */
+
+.snow {
+  position: absolute;
+  inset: 0;
+}
+
+.flake {
+  position: absolute;
+  top: -10%;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.85);
+  opacity: 0.9;
+  animation: snowfall linear infinite;
+}
+
+@keyframes snowfall {
+  0% {
+    top: -10%;
+    transform: translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  60% {
+    transform: translateX(8px);
+    opacity: 0.9;
+  }
+  100% {
+    top: 40%;
+    transform: translateX(-6px);
+    opacity: 0;
+  }
+}
+
+/* Per-theme rain/cloud tuning for contrast against the sky */
+:global([data-theme='night']) .cloud,
+:global([data-theme='night']) .cloud::before,
+:global([data-theme='night']) .cloud::after {
+  background: #cbd5e1;
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloud,
+  .drop,
+  .flake {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
+}
