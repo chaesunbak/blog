@@ -95,7 +95,22 @@
   height: 14px;
   background: linear-gradient(180deg, transparent, rgba(220, 230, 245, 0.9));
   border-radius: 2px;
+  filter: blur(0.4px);
   animation: raindrop linear infinite;
+}
+
+.dropBack {
+  width: 1px;
+  height: 10px;
+  background: linear-gradient(180deg, transparent, rgba(220, 230, 245, 0.45));
+  filter: blur(0.8px);
+}
+
+.dropFront {
+  width: 1.6px;
+  height: 16px;
+  background: linear-gradient(180deg, transparent, rgba(220, 230, 245, 1));
+  filter: blur(0.25px);
 }
 
 @keyframes raindrop {

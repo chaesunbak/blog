@@ -24,19 +24,31 @@ function Clouds() {
   );
 }
 
-const RAIN_DROP_COUNT = 70;
+const RAIN_BACK_COUNT = 45;
+const RAIN_FRONT_COUNT = 25;
 
 function Rain() {
   return (
     <div className={styles.rain}>
-      {Array.from({ length: RAIN_DROP_COUNT }).map((_, i) => (
+      {Array.from({ length: RAIN_BACK_COUNT }).map((_, i) => (
         <span
-          key={i}
-          className={styles.drop}
+          key={`b${i}`}
+          className={`${styles.drop} ${styles.dropBack}`}
           style={{
             left: `${(i * 7.3) % 100}%`,
-            animationDelay: `${(i % 14) * 0.08}s`,
-            animationDuration: `${0.8 + (i % 5) * 0.1}s`,
+            animationDelay: `${(i % 14) * 0.1}s`,
+            animationDuration: `${1.1 + (i % 5) * 0.12}s`,
+          }}
+        />
+      ))}
+      {Array.from({ length: RAIN_FRONT_COUNT }).map((_, i) => (
+        <span
+          key={`f${i}`}
+          className={`${styles.drop} ${styles.dropFront}`}
+          style={{
+            left: `${(i * 11.3 + 4) % 100}%`,
+            animationDelay: `${(i % 10) * 0.07}s`,
+            animationDuration: `${0.7 + (i % 4) * 0.08}s`,
           }}
         />
       ))}
